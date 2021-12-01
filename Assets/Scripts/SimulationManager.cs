@@ -5,14 +5,22 @@ using UnityEngine.UI;
 
 public class SimulationManager : MonoBehaviour
 {
-    public Text textReloj, textDias;
+    [Header("UI")]
+    public Text textReloj; public Text textDias; public Text textCiclo;
 
     private int dias = 1;
     private int tiempoInicial;
+
     [Header ("Minutos que transcurren en tiempo de juego por cada segundo en la vida real")]
     public int minutosPorSegundo = 10;   //Minutos que transcurren en tiempo de juego por cada segundo en la vida real
     private float tiempoDelFrameConTimeScale = 0f;
     private float tiempoAMostrarEnSegundos = 0f;
+
+    [Header("Estado del día")]
+    public bool dia = false;
+    public bool noche = false; 
+    public bool amanecer = false;
+    public Light luz;
 
     // Start is called before the first frame update
     void Start()
@@ -36,6 +44,30 @@ public class SimulationManager : MonoBehaviour
             dias++;
             ActualizarDias();
             tiempoAMostrarEnSegundos = 0;
+        }
+        if (tiempoAMostrarEnSegundos > 360 && tiempoAMostrarEnSegundos < 1080)
+        {
+            dia = true; 
+            noche = false; 
+            amanecer = false; 
+            textCiclo.text = "DIA";
+            luz.color = new Color(1, 0.9568627f, 0.8392157f, 1);
+        }
+        if (tiempoAMostrarEnSegundos > 1080 && tiempoAMostrarEnSegundos < 1440 || tiempoAMostrarEnSegundos > 0 && tiempoAMostrarEnSegundos < 240)
+        {
+            dia = false; 
+            noche = true; 
+            amanecer = false; 
+            textCiclo.text = "NOCHE";
+            luz.color = new Color(0.2396831f, 0.2193396f, 0.2924528f, 1); 
+        }
+        if (tiempoAMostrarEnSegundos > 240 && tiempoAMostrarEnSegundos < 360)
+        {
+            dia = false;
+            noche = false;
+            amanecer = true;
+            textCiclo.text = "AMANECER";
+            luz.color = new Color(0.6792453f, 0.4388201f, 0.3556426f, 1);
         }
     }
 
