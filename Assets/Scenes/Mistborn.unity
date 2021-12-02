@@ -234,7 +234,7 @@ GameObject:
   - component: {fileID: 98753092}
   - component: {fileID: 98753091}
   m_Layer: 0
-  m_Name: SimulationManager
+  m_Name: _SimulationManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -255,11 +255,10 @@ MonoBehaviour:
   textReloj: {fileID: 1604845207}
   textDias: {fileID: 1905124448}
   textCiclo: {fileID: 1143065309}
+  dias: 1
   minutosPorSegundo: 10
-  dia: 0
-  noche: 0
-  amanecer: 0
   luz: {fileID: 705507994}
+  ciclo: 0
 --- !u!4 &98753092
 Transform:
   m_ObjectHideFlags: 0
@@ -462,8 +461,9 @@ GameObject:
   - component: {fileID: 452694731}
   - component: {fileID: 452694730}
   - component: {fileID: 452694729}
+  - component: {fileID: 452694733}
   m_Layer: 0
-  m_Name: Sphere
+  m_Name: "NI\xD1O"
   m_TagString: Entity
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -557,6 +557,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 452694727}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &452694733
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 452694727}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d77f65d640499e488d854ee385257e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &577550980
 GameObject:
   m_ObjectHideFlags: 0

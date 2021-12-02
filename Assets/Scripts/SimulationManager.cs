@@ -8,7 +8,7 @@ public class SimulationManager : MonoBehaviour
     [Header("UI")]
     public Text textReloj; public Text textDias; public Text textCiclo;
 
-    private int dias = 1;
+    public int dias = 1;
     private int tiempoInicial;
 
     [Header ("Minutos que transcurren en tiempo de juego por cada segundo en la vida real")]
@@ -17,10 +17,9 @@ public class SimulationManager : MonoBehaviour
     private float tiempoAMostrarEnSegundos = 0f;
 
     [Header("Estado del día")]
-    public bool dia = false;
-    public bool noche = false; 
-    public bool amanecer = false;
     public Light luz;
+    public enum cicloDNA { DIA, NOCHE, AMANECER}
+    public cicloDNA ciclo;
 
     // Start is called before the first frame update
     void Start()
@@ -47,26 +46,20 @@ public class SimulationManager : MonoBehaviour
         }
         if (tiempoAMostrarEnSegundos > 360 && tiempoAMostrarEnSegundos < 1080)
         {
-            dia = true; 
-            noche = false; 
-            amanecer = false; 
             textCiclo.text = "DIA";
+            ciclo = cicloDNA.DIA;
             luz.color = new Color(1, 0.9568627f, 0.8392157f, 1);
         }
         if (tiempoAMostrarEnSegundos > 1080 && tiempoAMostrarEnSegundos < 1440 || tiempoAMostrarEnSegundos > 0 && tiempoAMostrarEnSegundos < 240)
         {
-            dia = false; 
-            noche = true; 
-            amanecer = false; 
             textCiclo.text = "NOCHE";
+            ciclo = cicloDNA.NOCHE;
             luz.color = new Color(0.2396831f, 0.2193396f, 0.2924528f, 1); 
         }
         if (tiempoAMostrarEnSegundos > 240 && tiempoAMostrarEnSegundos < 360)
         {
-            dia = false;
-            noche = false;
-            amanecer = true;
             textCiclo.text = "AMANECER";
+            ciclo = cicloDNA.AMANECER;
             luz.color = new Color(0.6792453f, 0.4388201f, 0.3556426f, 1);
         }
     }
