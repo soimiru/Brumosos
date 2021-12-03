@@ -2762,8 +2762,8 @@ GameObject:
   - component: {fileID: 452694731}
   - component: {fileID: 452694730}
   - component: {fileID: 452694729}
-  - component: {fileID: 452694733}
   - component: {fileID: 452694734}
+  - component: {fileID: 452694733}
   m_Layer: 6
   m_Name: "NI\xD1O"
   m_TagString: Entity
@@ -2868,7 +2868,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 452694727}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d77f65d640499e488d854ee385257e8, type: 3}
+  m_Script: {fileID: 11500000, guid: c5e24b85ab67c7b4da26600ed6342291, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   agent: {fileID: 452694734}
