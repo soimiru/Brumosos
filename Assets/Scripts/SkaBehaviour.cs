@@ -65,42 +65,42 @@ public class SkaBehaviour : MonoBehaviour
         behaviourTree = new BehaviourTreeEngine(false);
 
         //Nodos hoja
-        LeafNode tengoSalud = behaviourTree.CreateLeafNode("TengoSalud", actSalud, comprobarSalud); 
-        LeafNode esDia = behaviourTree.CreateLeafNode("EsDia", actDia, comprobarDia);
-        LeafNode cansado = behaviourTree.CreateLeafNode("Cansado", actCansado, comprobarCansado); //Descansar Selector
-        LeafNode descansar = behaviourTree.CreateLeafNode("Descansar", actDescansar, comprobarDescansar); //Descansar Selector
-        LeafNode esNoche = behaviourTree.CreateLeafNode("EsNoche", actNoche, comprobarNoche);
-        LeafNode dormir = behaviourTree.CreateLeafNode("Dormir", actDormir, comprobarDormir);
-        LeafNode trabajar = behaviourTree.CreateLeafNode("Trabajar", actTrabajar, comprobarTrabajar);
-        LeafNode morir = behaviourTree.CreateLeafNode("Morir", actMorir, comprobarMorir);
+        LeafNode tengoSaludLeafNode = behaviourTree.CreateLeafNode("TengoSalud", actSalud, comprobarSalud); 
+        LeafNode esDiaLeafNode = behaviourTree.CreateLeafNode("EsDia", actDia, comprobarDia);
+        LeafNode cansadoLeafNode = behaviourTree.CreateLeafNode("Cansado", actCansado, comprobarCansado); //Descansar Selector
+        LeafNode descansarLeafNode = behaviourTree.CreateLeafNode("Descansar", actDescansar, comprobarDescansar); //Descansar Selector
+        LeafNode esNocheLeafNode = behaviourTree.CreateLeafNode("EsNoche", actNoche, comprobarNoche);
+        LeafNode dormirLeafNode = behaviourTree.CreateLeafNode("Dormir", actDormir, comprobarDormir);
+        LeafNode trabajarLeafNode = behaviourTree.CreateLeafNode("Trabajar", actTrabajar, comprobarTrabajar);
+        LeafNode morirLeafNode = behaviourTree.CreateLeafNode("Morir", actMorir, comprobarMorir);
 
         SequenceNode descansarSequenceNode = behaviourTree.CreateSequenceNode("DescansarSelectorNode", false);
-        descansarSequenceNode.AddChild(cansado);
-        descansarSequenceNode.AddChild(descansar);
+        descansarSequenceNode.AddChild(cansadoLeafNode);
+        descansarSequenceNode.AddChild(descansarLeafNode);
 
         SelectorNode cansadoTrabajarSelectorNode = behaviourTree.CreateSelectorNode("CansadoTrabajarSequenceNode");
         cansadoTrabajarSelectorNode.AddChild(descansarSequenceNode);
-        cansadoTrabajarSelectorNode.AddChild(trabajar);
+        cansadoTrabajarSelectorNode.AddChild(trabajarLeafNode);
 
         SequenceNode comprobarDiaSequenceNode = behaviourTree.CreateSequenceNode("ComprobarDiaSequenceNode", false);
-        comprobarDiaSequenceNode.AddChild(esDia);
+        comprobarDiaSequenceNode.AddChild(esDiaLeafNode);
         comprobarDiaSequenceNode.AddChild(cansadoTrabajarSelectorNode);
 
         SequenceNode comprobarNocheSequenceNode = behaviourTree.CreateSequenceNode("ComprobarNocheSequenceNode", false);
-        comprobarNocheSequenceNode.AddChild(esNoche);
-        comprobarNocheSequenceNode.AddChild(dormir);
+        comprobarNocheSequenceNode.AddChild(esNocheLeafNode);
+        comprobarNocheSequenceNode.AddChild(dormirLeafNode);
 
         SelectorNode esDiaONocheSelectorNode = behaviourTree.CreateSelectorNode("esDiaONocheSelectorNode");
         esDiaONocheSelectorNode.AddChild(comprobarDiaSequenceNode);
         esDiaONocheSelectorNode.AddChild(comprobarNocheSequenceNode);
 
         SequenceNode tengoSaludSequenceNode = behaviourTree.CreateSequenceNode("TengoSaludSequenceNode", false);
-        tengoSaludSequenceNode.AddChild(tengoSalud);
+        tengoSaludSequenceNode.AddChild(tengoSaludLeafNode);
         tengoSaludSequenceNode.AddChild(esDiaONocheSelectorNode);
 
         SelectorNode baseSelectorNode = behaviourTree.CreateSelectorNode("BaseSelectorNode");
         baseSelectorNode.AddChild(tengoSaludSequenceNode);
-        baseSelectorNode.AddChild(morir);
+        baseSelectorNode.AddChild(morirLeafNode);
 
         LoopDecoratorNode rootNode = behaviourTree.CreateLoopNode("RootNode", baseSelectorNode);
         behaviourTree.SetRootNode(rootNode);
