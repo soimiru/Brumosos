@@ -146,7 +146,7 @@ public class SkaBehaviour : MonoBehaviour
     void estudiarAction()
     {
         //agent.SetDestination(new Vector3(12f, 1f, -20f));
-        agent.SetDestination(new Vector3(-2.5f, 1f, 8f));
+        agent.SetDestination(new Vector3(-8f, 1f, 15f));
         Debug.Log("ESTUDIANDO");
     }
     void dormirAction()
@@ -226,10 +226,12 @@ public class SkaBehaviour : MonoBehaviour
     {
         if (cansancio >= 50)
         {
+            Debug.Log("Estoy cansado");
             return ReturnValues.Succeed;
         }
         else
         {
+            Debug.Log("Estoy bien energico");
             return ReturnValues.Failed;
         }
     }
@@ -253,7 +255,6 @@ public class SkaBehaviour : MonoBehaviour
         }
         else
         {
-            Debug.Log(this.transform.position);
             Debug.Log("Voy de camino a descansar");
             return ReturnValues.Running;
         }
@@ -266,6 +267,7 @@ public class SkaBehaviour : MonoBehaviour
         //Futuramente se cambiará al US
         agent.SetDestination(new Vector3(15.5f, 1f, -18.5f));
         Debug.Log("Durmiendo");
+        cansancio = 0;
     }
     private ReturnValues comprobarDormir()
     {
