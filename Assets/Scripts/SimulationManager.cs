@@ -14,7 +14,7 @@ public class SimulationManager : MonoBehaviour
     [Header ("Minutos que transcurren en tiempo de juego por cada segundo en la vida real")]
     public int minutosPorSegundo = 10;   //Minutos que transcurren en tiempo de juego por cada segundo en la vida real
     private float tiempoDelFrameConTimeScale = 0f;
-    private float tiempoAMostrarEnSegundos = 0f;
+    public float tiempoAMostrarEnSegundos = 0f;
 
     [Header("Estado del día")]
     public Light luz;
