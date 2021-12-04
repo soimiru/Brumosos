@@ -7,6 +7,7 @@ public class NobleBehaviour : MonoBehaviour
     private int diaNacimiento;
     int cansancio = 50;
     int salud = 100;
+    float empezarTrabajo = 0;
 
     private enum estados { ESTUDIAR, DORMIR };
     private bool adulto = false;
@@ -158,7 +159,6 @@ public class NobleBehaviour : MonoBehaviour
     }
 
 
-
     #region METODOS CHILD
     void estudiarAction()
     {
@@ -213,23 +213,23 @@ public class NobleBehaviour : MonoBehaviour
         if (miPosicion != posiciones.FABRICA)
         {
             agent.SetDestination(navPoints.goToFabrica());
-            miPosicion = posiciones.FABRICA;
         }
         else {
             Debug.Log("NOBLE TRABAJANDO");
             cansancio += 1;
+
         }
     }
     private ReturnValues haTrabajado()
     {
-        if (miPosicion == posiciones.FABRICA)
+        if (navPoints.comprobarPosFabrica(this.transform.position))
         {
+            miPosicion = posiciones.FABRICA;
             return ReturnValues.Succeed;
         }
         else {
-            return ReturnValues.Failed;
+            return ReturnValues.Running;
         }
-        
     }
 
     void descansar()
@@ -237,23 +237,24 @@ public class NobleBehaviour : MonoBehaviour
         if (miPosicion != posiciones.FABRICA)
         {
             agent.SetDestination(navPoints.goToFabrica());
-            miPosicion = posiciones.FABRICA;
         }
         else {
             Debug.Log("NOBLE DESCANSANDO");
             cansancio -= 1;
+            
         }
     }
 
     private ReturnValues haDescansado()
     {
-        if (miPosicion == posiciones.FABRICA)
+        if (navPoints.comprobarPosFabrica(this.transform.position))
         {
+            miPosicion = posiciones.FABRICA;
             return ReturnValues.Succeed;
         }
         else
         {
-            return ReturnValues.Failed;
+            return ReturnValues.Running;
         }
     }
 
