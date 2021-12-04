@@ -10,7 +10,7 @@ public class SkaBehaviour : MonoBehaviour
 
     #region variables Ska
     int salud = 100;
-    int cansancio = 50;
+    int cansancio = 0;
     private int diaNacimiento;
     private bool adulto = false;
 
@@ -78,20 +78,28 @@ public class SkaBehaviour : MonoBehaviour
         LeafNode morirLeafNode = behaviourTree.CreateLeafNode("Morir", actMorir, comprobarMorir);
         LeafNode irATrabajar = behaviourTree.CreateLeafNode("IrAlTrabajo", actIrATrabajar, comprobarLlegada);
 
-        LeafNode timeDescansarLeafNode = behaviourTree.CreateLeafNode("TimerTrabajar", actTimer, comprobarTimer);
+        LeafNode timeDescansarLeafNode = behaviourTree.CreateLeafNode("TimerDescansar", actTimer, comprobarTimer);
+        LeafNode timeTrabajarLeafNode = behaviourTree.CreateLeafNode("TimerTrabajar", actTimer, comprobarTimer);
 
-        TimerDecoratorNode timerNodeTrabajar = behaviourTree.CreateTimerNode("TimerNodeTrabajar", timeDescansarLeafNode, 100000);
+        TimerDecoratorNode timerNodeDescansar = behaviourTree.CreateTimerNode("TimerNodeDescansar", timeDescansarLeafNode, 5);
+        TimerDecoratorNode timerNodeTrabajar = behaviourTree.CreateTimerNode("TimerNodeTrabajar", timeTrabajarLeafNode, 5);
 
         //Nodo secuencia 1
         SequenceNode descansarSequenceNode = behaviourTree.CreateSequenceNode("DescansarSelectorNode", false);
         descansarSequenceNode.AddChild(cansadoLeafNode);
         descansarSequenceNode.AddChild(descansarLeafNode);
-        descansarSequenceNode.AddChild(timeDescansarLeafNode);
+        descansarSequenceNode.AddChild(timerNodeDescansar);
+
+        //Nodo secuencia 1**
+        SequenceNode trabajarYEsperarSequenceNode = behaviourTree.CreateSequenceNode("TrabajarYEsperarSequenceNode", false);
+        trabajarYEsperarSequenceNode.AddChild(trabajarLeafNode);
+        trabajarYEsperarSequenceNode.AddChild(timerNodeTrabajar);
 
         //Nodo selector 1
         SelectorNode cansadoTrabajarSelectorNode = behaviourTree.CreateSelectorNode("CansadoTrabajarSequenceNode");
         cansadoTrabajarSelectorNode.AddChild(descansarSequenceNode);
-        cansadoTrabajarSelectorNode.AddChild(trabajarLeafNode);
+        cansadoTrabajarSelectorNode.AddChild(trabajarYEsperarSequenceNode);
+
 
         //Nodo secuencia 2
         SequenceNode comprobarDiaSequenceNode = behaviourTree.CreateSequenceNode("ComprobarDiaSequenceNode", false);
@@ -136,7 +144,7 @@ public class SkaBehaviour : MonoBehaviour
                 childFSM.Fire("Dormir");
                 break;
         }
-        if (simManager.dias == (diaNacimiento + 10))
+        if (simManager.dias == (diaNacimiento + 2))
         {
             childFSM.Fire("Crecer");
         }
@@ -255,7 +263,7 @@ public class SkaBehaviour : MonoBehaviour
         }
         else
         {
-            Debug.Log("Voy de camino a descansar");
+           // Debug.Log("Voy de camino a descansar");
             return ReturnValues.Running;
         }
         
@@ -270,7 +278,8 @@ public class SkaBehaviour : MonoBehaviour
     }
     private ReturnValues comprobarDormir()
     {
-        if (this.transform.position.x == 15.5f || this.transform.position.z == -18.5f && simManager.ciclo == SimulationManager.cicloDNA.DIA)
+        Debug.Log("comprobacion de dormir");
+        if (this.transform.position.x == 15.5f && this.transform.position.z == -18.5f && simManager.ciclo == SimulationManager.cicloDNA.DIA)
         {
             return ReturnValues.Succeed;
         }
