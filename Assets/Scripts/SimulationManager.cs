@@ -89,7 +89,7 @@ public class SimulationManager : MonoBehaviour
 
     public void timex1()
     {
-        Time.timeScale = 10;
+        Time.timeScale = 1;
         //minutosPorSegundo = 10;
     }
 
