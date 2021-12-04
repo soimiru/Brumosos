@@ -80,7 +80,7 @@ public class SkaBehaviour : MonoBehaviour
 
         LeafNode timeDescansarLeafNode = behaviourTree.CreateLeafNode("TimerTrabajar", actTimer, comprobarTimer);
 
-        TimerDecoratorNode timerNodeTrabajar = behaviourTree.CreateTimerNode("TimerNodeTrabajar", timeDescansarLeafNode, 1000);
+        TimerDecoratorNode timerNodeTrabajar = behaviourTree.CreateTimerNode("TimerNodeTrabajar", timeDescansarLeafNode, 100000);
 
         //Nodo secuencia 1
         SequenceNode descansarSequenceNode = behaviourTree.CreateSequenceNode("DescansarSelectorNode", false);
@@ -226,10 +226,12 @@ public class SkaBehaviour : MonoBehaviour
     {
         if (cansancio >= 50)
         {
+            Debug.Log("Cansancio alto");
             return ReturnValues.Succeed;
         }
         else
         {
+            Debug.Log("Cansancio bajo");
             return ReturnValues.Failed;
         }
     }
@@ -253,7 +255,6 @@ public class SkaBehaviour : MonoBehaviour
         }
         else
         {
-            Debug.Log(this.transform.position);
             Debug.Log("Voy de camino a descansar");
             return ReturnValues.Running;
         }
@@ -269,7 +270,7 @@ public class SkaBehaviour : MonoBehaviour
     }
     private ReturnValues comprobarDormir()
     {
-        if (this.transform.position.x == 15.5f || this.transform.position.z == -18.5f)
+        if (this.transform.position.x == 15.5f || this.transform.position.z == -18.5f && simManager.ciclo == SimulationManager.cicloDNA.DIA)
         {
             return ReturnValues.Succeed;
         }
@@ -288,7 +289,14 @@ public class SkaBehaviour : MonoBehaviour
     }
     private ReturnValues comprobarTrabajar()
     {
-        return ReturnValues.Succeed;
+        if (this.transform.position.x == -19.5f || this.transform.position.z == 19.5f)
+        {
+            return ReturnValues.Succeed;
+        }
+        else
+        {
+            return ReturnValues.Running;
+        }
     }
 
     private void actMorir()
@@ -306,7 +314,6 @@ public class SkaBehaviour : MonoBehaviour
     }
     private ReturnValues comprobarTimer()
     {
-        
         return ReturnValues.Succeed;
     }
     private void actIrATrabajar()
