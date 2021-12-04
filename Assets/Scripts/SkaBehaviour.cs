@@ -80,7 +80,7 @@ public class SkaBehaviour : MonoBehaviour
 
         LeafNode timeDescansarLeafNode = behaviourTree.CreateLeafNode("TimerTrabajar", actTimer, comprobarTimer);
 
-        TimerDecoratorNode timerNodeTrabajar = behaviourTree.CreateTimerNode("TimerNodeTrabajar", timeDescansarLeafNode, 1000);
+        TimerDecoratorNode timerNodeTrabajar = behaviourTree.CreateTimerNode("TimerNodeTrabajar", timeDescansarLeafNode, 100000);
 
         //Nodo secuencia 1
         SequenceNode descansarSequenceNode = behaviourTree.CreateSequenceNode("DescansarSelectorNode", false);
@@ -146,7 +146,7 @@ public class SkaBehaviour : MonoBehaviour
     void estudiarAction()
     {
         //agent.SetDestination(new Vector3(12f, 1f, -20f));
-        agent.SetDestination(new Vector3(-8f, 1f, 15f));
+        agent.SetDestination(new Vector3(-2.5f, 1f, 8f));
         Debug.Log("ESTUDIANDO");
     }
     void dormirAction()
@@ -226,12 +226,12 @@ public class SkaBehaviour : MonoBehaviour
     {
         if (cansancio >= 50)
         {
-            Debug.Log("Estoy cansado");
+            Debug.Log("Cansancio alto");
             return ReturnValues.Succeed;
         }
         else
         {
-            Debug.Log("Estoy bien energico");
+            Debug.Log("Cansancio bajo");
             return ReturnValues.Failed;
         }
     }
@@ -267,11 +267,10 @@ public class SkaBehaviour : MonoBehaviour
         //Futuramente se cambiará al US
         agent.SetDestination(new Vector3(15.5f, 1f, -18.5f));
         Debug.Log("Durmiendo");
-        cansancio = 0;
     }
     private ReturnValues comprobarDormir()
     {
-        if (this.transform.position.x == 15.5f || this.transform.position.z == -18.5f)
+        if (this.transform.position.x == 15.5f || this.transform.position.z == -18.5f && simManager.ciclo == SimulationManager.cicloDNA.DIA)
         {
             return ReturnValues.Succeed;
         }
@@ -290,7 +289,14 @@ public class SkaBehaviour : MonoBehaviour
     }
     private ReturnValues comprobarTrabajar()
     {
-        return ReturnValues.Succeed;
+        if (this.transform.position.x == -19.5f || this.transform.position.z == 19.5f)
+        {
+            return ReturnValues.Succeed;
+        }
+        else
+        {
+            return ReturnValues.Running;
+        }
     }
 
     private void actMorir()
@@ -308,7 +314,6 @@ public class SkaBehaviour : MonoBehaviour
     }
     private ReturnValues comprobarTimer()
     {
-        
         return ReturnValues.Succeed;
     }
     private void actIrATrabajar()
