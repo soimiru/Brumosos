@@ -5,7 +5,7 @@ using UnityEngine.AI;
 public class NobleBehaviour : MonoBehaviour
 {
     private int diaNacimiento;
-    int cansancio = 50;
+    int cansancio = 0;
     int salud = 100;
     string UItxt = "";
 
