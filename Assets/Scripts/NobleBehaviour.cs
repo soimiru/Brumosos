@@ -4,12 +4,17 @@ using UnityEngine.AI;
 
 public class NobleBehaviour : MonoBehaviour
 {
-    public NavMeshAgent agent;
     private int diaNacimiento;
+    int cansancio = 50;
+    int salud = 100;
 
     private enum estados { ESTUDIAR, DORMIR };
     private bool adulto = false;
     private SimulationManager simManager;
+    public NavMeshAgent agent;
+    private NavigationPoints navPoints;
+    public enum posiciones { FABRICA, MANSIONNOBLE, CALLE }
+    public posiciones miPosicion;
 
     StateMachineEngine childFSM = new StateMachineEngine();
     BehaviourTreeEngine adultBT = new BehaviourTreeEngine();
@@ -17,6 +22,7 @@ public class NobleBehaviour : MonoBehaviour
     private void Awake()
     {
         simManager = GameObject.Find("_SimulationManager").GetComponent(typeof(SimulationManager)) as SimulationManager;
+        navPoints = new NavigationPoints();
         diaNacimiento = simManager.dias;
     }
 
@@ -193,7 +199,7 @@ public class NobleBehaviour : MonoBehaviour
     void actionNoche() { }
     private ReturnValues comprobarNoche()
     {
-        if (simManager.ciclo == SimulationManager.cicloDNA.NOCHE)
+        if (simManager.ciclo == SimulationManager.cicloDNA.NOCHE || simManager.ciclo == SimulationManager.cicloDNA.AMANECER)
         {
             return ReturnValues.Succeed;
         }
@@ -203,22 +209,52 @@ public class NobleBehaviour : MonoBehaviour
         }
     }
     void trabajar() {
-        Debug.Log("NOBLE TRABAJANDO");
-        agent.SetDestination(new Vector3(-19.5f, 1f, 19.5f));
+        
+        if (miPosicion != posiciones.FABRICA)
+        {
+            agent.SetDestination(navPoints.goToFabrica());
+            miPosicion = posiciones.FABRICA;
+        }
+        else {
+            Debug.Log("NOBLE TRABAJANDO");
+            cansancio += 1;
+        }
     }
     private ReturnValues haTrabajado()
     {
-        return ReturnValues.Succeed;
+        if (miPosicion == posiciones.FABRICA)
+        {
+            return ReturnValues.Succeed;
+        }
+        else {
+            return ReturnValues.Failed;
+        }
+        
     }
 
     void descansar()
     {
-        Debug.Log("NOBLE DESCANSANDO");
-        agent.SetDestination(new Vector3(-8.5f, 1f, 19.5f));
+        if (miPosicion != posiciones.FABRICA)
+        {
+            agent.SetDestination(navPoints.goToFabrica());
+            miPosicion = posiciones.FABRICA;
+        }
+        else {
+            Debug.Log("NOBLE DESCANSANDO");
+            cansancio -= 1;
+        }
     }
+
     private ReturnValues haDescansado()
     {
-        return ReturnValues.Succeed;
+        if (miPosicion == posiciones.FABRICA)
+        {
+            return ReturnValues.Succeed;
+        }
+        else
+        {
+            return ReturnValues.Failed;
+        }
     }
 
     private ReturnValues resultadoFiesta()
@@ -228,8 +264,15 @@ public class NobleBehaviour : MonoBehaviour
 
     private void fiestaSU()
     {
-        Debug.Log("NOBLE FIESTA");
-        agent.SetDestination(new Vector3(9.5f, 1f, 19.5f));
+        if (miPosicion != posiciones.MANSIONNOBLE)
+        {
+            agent.SetDestination(navPoints.goToMansionNoble());
+            miPosicion = posiciones.MANSIONNOBLE;
+        }
+        else
+        {
+            Debug.Log("NOBLE FIESTA");
+        }
     }
 
     private ReturnValues comprobarFiesta()
@@ -252,8 +295,15 @@ public class NobleBehaviour : MonoBehaviour
 
     void merodearFSM()
     {
-        Debug.Log("NOBLE MERODEANDO");
-        agent.SetDestination(new Vector3(-7f, 1f, -2f));
+        if (miPosicion != posiciones.CALLE)
+        {
+            agent.SetDestination(new Vector3(-7f, 1f, -2f));
+            miPosicion = posiciones.CALLE;
+        }
+        else {
+            Debug.Log("NOBLE MERODEANDO");
+        }
+        
     }
 
     private ReturnValues resultadoDormir()
@@ -263,8 +313,17 @@ public class NobleBehaviour : MonoBehaviour
 
     private void actionDormir()
     {
-        Debug.Log("NOBLE MIMIDO");
-        agent.SetDestination(new Vector3(19.5f, 1f, 13f));
+        //agent.SetDestination(new Vector3(19.5f, 1f, 13f));
+        if (miPosicion != posiciones.MANSIONNOBLE)
+        {
+            agent.SetDestination(navPoints.goToMansionNoble());
+            miPosicion = posiciones.MANSIONNOBLE;
+        }
+        else {
+            Debug.Log("NOBLE MIMIDO");
+            cansancio -= 1;
+        }
+        
     }
 
 
