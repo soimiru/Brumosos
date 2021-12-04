@@ -36,13 +36,14 @@ public class Inquisidores : MonoBehaviour
         behaviourTree = new BehaviourTreeEngine(false);
         //Nodos hoja
         LeafNode tengoMetalesLeafNode = behaviourTree.CreateLeafNode("TengoMetales", actTengoMetales, compMetales);
-        LeafNode patrullarLeafNode1 = behaviourTree.CreateLeafNode("Patrullar", actPatrullar1, compPatrullar1);
-        LeafNode patrullarLeafNode2 = behaviourTree.CreateLeafNode("Patrullar", actPatrullar2, compPatrullar2);
-        LeafNode patrullarLeafNode3 = behaviourTree.CreateLeafNode("Patrullar", actPatrullar3, compPatrullar3);
+        LeafNode patrullarLeafNode1 = behaviourTree.CreateLeafNode("Patrullar1", actPatrullar1, compPatrullar1);
+        LeafNode patrullarLeafNode2 = behaviourTree.CreateLeafNode("Patrullar2", actPatrullar2, compPatrullar2);
+        LeafNode patrullarLeafNode3 = behaviourTree.CreateLeafNode("Patrullar3", actPatrullar3, compPatrullar3);
 
         LeafNode irAlMinisterio = behaviourTree.CreateLeafNode("IrAMinisterio", actIrAMinisterio, comprobarMinisterio);
         LeafNode recargarMetales = behaviourTree.CreateLeafNode("RecargarMetales", actRecargarMetales, comprobarMetalesRecargados);
 
+        TimerDecoratorNode timerRecarga = behaviourTree.CreateTimerNode("TimerRecargaMetales", recargarMetales, 5);
         //Sequence node aleatorio
         SequenceNode patrullarSequenceNode = behaviourTree.CreateSequenceNode("PatrullarSequenceNode", true);
         patrullarSequenceNode.AddChild(patrullarLeafNode1);
@@ -56,9 +57,13 @@ public class Inquisidores : MonoBehaviour
 
         LoopUntilFailDecoratorNode patrullarUntilFail = behaviourTree.CreateLoopUntilFailNode("PatrullarUntilFail", comprobarMetalesSequenceNode);
 
+        SequenceNode irMinisterioRecargaSequenceNode = behaviourTree.CreateSequenceNode("IRMinisterioYRecargar", false);
+        irMinisterioRecargaSequenceNode.AddChild(irAlMinisterio);
+        irMinisterioRecargaSequenceNode.AddChild(timerRecarga);
+
         SequenceNode recargarMetalesSequenceNode = behaviourTree.CreateSequenceNode("RecargarMetalesSequenceNode", false);
         recargarMetalesSequenceNode.AddChild(patrullarUntilFail);
-        recargarMetalesSequenceNode.AddChild(recargarMetales);
+        recargarMetalesSequenceNode.AddChild(irMinisterioRecargaSequenceNode);
 
         LoopDecoratorNode rootNode = behaviourTree.CreateLoopNode("RootNode", recargarMetalesSequenceNode);
         behaviourTree.SetRootNode(rootNode);
@@ -70,6 +75,7 @@ public class Inquisidores : MonoBehaviour
     }
     private ReturnValues compMetales()
     {
+        Debug.Log(metales);
         if (metales >= 10)
         {
             return ReturnValues.Succeed;
@@ -83,11 +89,16 @@ public class Inquisidores : MonoBehaviour
     private void actPatrullar1()
     {
         agent.SetDestination(new Vector3(7.5f, 1f, -16.5f));
-        metales -= 20;
+        metales -= 35;
+        if (metales < 0)
+        {
+            metales = 0;
+        }
     }
     private ReturnValues compPatrullar1()
     {
-        if (this.transform.position.x == 7.5 && this.transform.position.z == -16.5)
+        
+        if (this.transform.position.x >= 7.3 && this.transform.position.x <= 8 && this.transform.position.z >= -17 && this.transform.position.z <= -16)
         {
             return ReturnValues.Succeed;
         }
@@ -99,11 +110,15 @@ public class Inquisidores : MonoBehaviour
     private void actPatrullar2()
     {
         agent.SetDestination(new Vector3(15.5f, 1f, 7.5f));
-        metales -= 20;
+        metales -= 35;
+        if (metales < 0)
+        {
+            metales = 0;
+        }
     }
     private ReturnValues compPatrullar2()
     {
-        if (this.transform.position.x == 15.5 && this.transform.position.z == 7.5)
+        if (this.transform.position.x >= 15 && this.transform.position.x <= 16 && this.transform.position.z >= 7 && this.transform.position.z <= 8)
         {
             return ReturnValues.Succeed;
         }
@@ -115,11 +130,15 @@ public class Inquisidores : MonoBehaviour
     private void actPatrullar3()
     {
         agent.SetDestination(new Vector3(-18f, 1f, 10f));
-        metales -= 20;
+        metales -= 35;
+        if (metales < 0)
+        {
+            metales = 0;
+        }
     }
     private ReturnValues compPatrullar3()
     {
-        if (this.transform.position.x == -18 && this.transform.position.z == 10)
+        if (this.transform.position.x >= -18.5 && this.transform.position.x <= -17.5 && this.transform.position.z >= 9.5 && this.transform.position.z <= 10.5)
         {
             return ReturnValues.Succeed;
         }
