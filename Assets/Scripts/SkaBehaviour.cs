@@ -5,19 +5,23 @@ public class SkaBehaviour : MonoBehaviour
 {
     public NavMeshAgent agent;
     private SimulationManager simManager;
+    private BehaviourTreeEngine behaviourTree;
+    StateMachineEngine childFSM = new StateMachineEngine();
+
+    #region variables Ska
+    int salud = 100;
+    int cansancio = 50;
     private int diaNacimiento;
     private bool adulto = false;
-    private BehaviourTreeEngine behaviourTree;
-    private enum estados { ESTUDIAR, DORMIR };
-    int cansancio = 50;
-    int salud = 100;
-    StateMachineEngine childFSM = new StateMachineEngine();
+
+    #endregion variables Ska
 
     private void Awake()
     {
         
         simManager = GameObject.Find("_SimulationManager").GetComponent(typeof(SimulationManager)) as SimulationManager;
         diaNacimiento = simManager.dias;
+        
     }
 
     // Start is called before the first frame update
@@ -38,7 +42,6 @@ public class SkaBehaviour : MonoBehaviour
         Perception crecer = childFSM.CreatePerception<PushPerception>();
 
         //Transiciones
-        //childFSM.CreateTransition("AMimir", nacerState, nacimiento, dormirState);
         childFSM.CreateTransition("Dormir", estudiarState, hacerNoche, dormirState);
         childFSM.CreateTransition("Estudiar", dormirState, hacerDia, estudiarState);
         childFSM.CreateTransition("Crecer", dormirState, crecer, crecerState);
@@ -65,43 +68,58 @@ public class SkaBehaviour : MonoBehaviour
         behaviourTree = new BehaviourTreeEngine(false);
 
         //Nodos hoja
-        LeafNode tengoSalud = behaviourTree.CreateLeafNode("TengoSalud", actSalud, comprobarSalud); 
-        LeafNode esDia = behaviourTree.CreateLeafNode("EsDia", actDia, comprobarDia);
-        LeafNode cansado = behaviourTree.CreateLeafNode("Cansado", actCansado, comprobarCansado); //Descansar Selector
-        LeafNode descansar = behaviourTree.CreateLeafNode("Descansar", actDescansar, comprobarDescansar); //Descansar Selector
-        LeafNode esNoche = behaviourTree.CreateLeafNode("EsNoche", actNoche, comprobarNoche);
-        LeafNode dormir = behaviourTree.CreateLeafNode("Dormir", actDormir, comprobarDormir);
-        LeafNode trabajar = behaviourTree.CreateLeafNode("Trabajar", actTrabajar, comprobarTrabajar);
-        LeafNode morir = behaviourTree.CreateLeafNode("Morir", actMorir, comprobarMorir);
+        LeafNode tengoSaludLeafNode = behaviourTree.CreateLeafNode("TengoSalud", actSalud, comprobarSalud); 
+        LeafNode esDiaLeafNode = behaviourTree.CreateLeafNode("EsDia", actDia, comprobarDia);
+        LeafNode cansadoLeafNode = behaviourTree.CreateLeafNode("Cansado", actCansado, comprobarCansado); //Descansar Selector
+        LeafNode descansarLeafNode = behaviourTree.CreateLeafNode("Descansar", actDescansar, comprobarDescansar); //Descansar Selector
+        LeafNode esNocheLeafNode = behaviourTree.CreateLeafNode("EsNoche", actNoche, comprobarNoche);
+        LeafNode dormirLeafNode = behaviourTree.CreateLeafNode("Dormir", actDormir, comprobarDormir);
+        LeafNode trabajarLeafNode = behaviourTree.CreateLeafNode("Trabajar", actTrabajar, comprobarTrabajar);
+        LeafNode morirLeafNode = behaviourTree.CreateLeafNode("Morir", actMorir, comprobarMorir);
+        LeafNode irATrabajar = behaviourTree.CreateLeafNode("IrAlTrabajo", actIrATrabajar, comprobarLlegada);
 
+        LeafNode timeDescansarLeafNode = behaviourTree.CreateLeafNode("TimerTrabajar", actTimer, comprobarTimer);
+
+        TimerDecoratorNode timerNodeTrabajar = behaviourTree.CreateTimerNode("TimerNodeTrabajar", timeDescansarLeafNode, 1000);
+
+        //Nodo secuencia 1
         SequenceNode descansarSequenceNode = behaviourTree.CreateSequenceNode("DescansarSelectorNode", false);
-        descansarSequenceNode.AddChild(cansado);
-        descansarSequenceNode.AddChild(descansar);
+        descansarSequenceNode.AddChild(cansadoLeafNode);
+        descansarSequenceNode.AddChild(descansarLeafNode);
+        descansarSequenceNode.AddChild(timeDescansarLeafNode);
 
+        //Nodo selector 1
         SelectorNode cansadoTrabajarSelectorNode = behaviourTree.CreateSelectorNode("CansadoTrabajarSequenceNode");
         cansadoTrabajarSelectorNode.AddChild(descansarSequenceNode);
-        cansadoTrabajarSelectorNode.AddChild(trabajar);
+        cansadoTrabajarSelectorNode.AddChild(trabajarLeafNode);
 
+        //Nodo secuencia 2
         SequenceNode comprobarDiaSequenceNode = behaviourTree.CreateSequenceNode("ComprobarDiaSequenceNode", false);
-        comprobarDiaSequenceNode.AddChild(esDia);
+        comprobarDiaSequenceNode.AddChild(esDiaLeafNode);
+        comprobarDiaSequenceNode.AddChild(irATrabajar);
         comprobarDiaSequenceNode.AddChild(cansadoTrabajarSelectorNode);
 
+        //Nodo secuencia 3
         SequenceNode comprobarNocheSequenceNode = behaviourTree.CreateSequenceNode("ComprobarNocheSequenceNode", false);
-        comprobarNocheSequenceNode.AddChild(esNoche);
-        comprobarNocheSequenceNode.AddChild(dormir);
+        comprobarNocheSequenceNode.AddChild(esNocheLeafNode);
+        comprobarNocheSequenceNode.AddChild(dormirLeafNode);
 
+        //Nodo selector 2
         SelectorNode esDiaONocheSelectorNode = behaviourTree.CreateSelectorNode("esDiaONocheSelectorNode");
         esDiaONocheSelectorNode.AddChild(comprobarDiaSequenceNode);
         esDiaONocheSelectorNode.AddChild(comprobarNocheSequenceNode);
 
+        //Nodo secuencia 4
         SequenceNode tengoSaludSequenceNode = behaviourTree.CreateSequenceNode("TengoSaludSequenceNode", false);
-        tengoSaludSequenceNode.AddChild(tengoSalud);
+        tengoSaludSequenceNode.AddChild(tengoSaludLeafNode);
         tengoSaludSequenceNode.AddChild(esDiaONocheSelectorNode);
 
+        //Nodo selector 3
         SelectorNode baseSelectorNode = behaviourTree.CreateSelectorNode("BaseSelectorNode");
         baseSelectorNode.AddChild(tengoSaludSequenceNode);
-        baseSelectorNode.AddChild(morir);
+        baseSelectorNode.AddChild(morirLeafNode);
 
+        //Nodo raíz
         LoopDecoratorNode rootNode = behaviourTree.CreateLoopNode("RootNode", baseSelectorNode);
         behaviourTree.SetRootNode(rootNode);
 
@@ -124,6 +142,7 @@ public class SkaBehaviour : MonoBehaviour
         }
     }
 
+    #region FSM Child
     void estudiarAction()
     {
         //agent.SetDestination(new Vector3(12f, 1f, -20f));
@@ -146,20 +165,24 @@ public class SkaBehaviour : MonoBehaviour
         createBT();
         //Debug.Log("He cresido");
     }
+    #endregion FSM Child
 
     #region accionesBT
     private void actSalud()
     {
-        Debug.Log("Compruebo Salud");
+        
     }
     private ReturnValues comprobarSalud()
     {
+        Debug.Log("Compruebo Salud");
         if (salud > 0 )
         {
+            Debug.Log("Salud bien");
             return ReturnValues.Succeed;
         }
         else
         {
+            Debug.Log("Salud mal");
             return ReturnValues.Failed;
         }
     }
@@ -185,7 +208,7 @@ public class SkaBehaviour : MonoBehaviour
     }
     private ReturnValues comprobarNoche()
     {
-        if (simManager.ciclo == SimulationManager.cicloDNA.NOCHE)
+        if (simManager.ciclo == SimulationManager.cicloDNA.NOCHE || simManager.ciclo == SimulationManager.cicloDNA.AMANECER)
         {
             return ReturnValues.Succeed;
         }
@@ -214,26 +237,52 @@ public class SkaBehaviour : MonoBehaviour
     private void actDescansar()
     {
         //Programar la acción de descansar
-        cansancio = 0;
+        agent.SetDestination(new Vector3(-8.5f, 1f, 18.5f));
+        cansancio -= 30;
+        if (cansancio > 0)
+        {
+            cansancio = 0;
+        }
         Debug.Log("ACABO DE DESCANSAR");
     }
     private ReturnValues comprobarDescansar()
     {
-        return ReturnValues.Succeed;
+        if (this.transform.position.x == -8.5f || this.transform.position.z == 18.5f)
+        {
+            return ReturnValues.Succeed;
+        }
+        else
+        {
+            Debug.Log(this.transform.position);
+            Debug.Log("Voy de camino a descansar");
+            return ReturnValues.Running;
+        }
+        
+        
     }
     private void actDormir()
     {
         //Programar la acción de dormir
         //Futuramente se cambiará al US
+        agent.SetDestination(new Vector3(15.5f, 1f, -18.5f));
         Debug.Log("Durmiendo");
     }
     private ReturnValues comprobarDormir()
     {
-        return ReturnValues.Succeed;
+        if (this.transform.position.x == 15.5f || this.transform.position.z == -18.5f)
+        {
+            return ReturnValues.Succeed;
+        }
+        else
+        {
+            return ReturnValues.Running;
+        }
+        
     }
 
     private void actTrabajar()
     {
+        agent.SetDestination(new Vector3(-19.5f, 1f, 19.5f));
         cansancio += 20;
         Debug.Log("Acabo de trabajar");
     }
@@ -248,10 +297,32 @@ public class SkaBehaviour : MonoBehaviour
     }
     private ReturnValues comprobarMorir()
     {
-        Debug.Log("Me morí");
+        //Debug.Log("Me morí");
         return ReturnValues.Succeed;
     }
-
-
+    private void actTimer()
+    {
+        Debug.Log("Timer descansar");
+    }
+    private ReturnValues comprobarTimer()
+    {
+        
+        return ReturnValues.Succeed;
+    }
+    private void actIrATrabajar()
+    {
+        agent.SetDestination(new Vector3(-19.5f, 1f, 19.5f));
+    }
+    private ReturnValues comprobarLlegada()
+    {
+        if (this.transform.position.x == -19.5f || this.transform.position.z == 19.5f)
+        {
+            return ReturnValues.Succeed;
+        }
+        else
+        {
+            return ReturnValues.Running;
+        }
+    }
     #endregion accionesBT
 }
