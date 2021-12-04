@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 
-public class SkaBehaviour : MonoBehaviour
+public class SkaaBehaviour : MonoBehaviour
 {
     public NavMeshAgent agent;
     private SimulationManager simManager;
@@ -199,7 +199,7 @@ public class SkaBehaviour : MonoBehaviour
     }
     #endregion FSM Child
 
-    #region accionesBT
+    #region AccionesBT Adulto
     private void actSalud()
     {
         
