@@ -18,10 +18,8 @@ public class SkaBehaviour : MonoBehaviour
 
     private void Awake()
     {
-        
         simManager = GameObject.Find("_SimulationManager").GetComponent(typeof(SimulationManager)) as SimulationManager;
         diaNacimiento = simManager.dias;
-        
     }
 
     // Start is called before the first frame update
