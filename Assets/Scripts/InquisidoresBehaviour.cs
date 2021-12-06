@@ -8,13 +8,36 @@ public class InquisidoresBehaviour : MonoBehaviour
     public NavMeshAgent agent;
     private SimulationManager simManager;
     private BehaviourTreeEngine behaviourTree;
+    private StateMachineEngine stateMachine;
+    private LeafNode subFSM;
     string UItxt = "";
 
     #region variables Inquisidores
-    int salud = 100;
-    int metales = 100;
+    private int salud = 100;
+    private int metales = 100;
     private int diaNacimiento;
     #endregion variables Inquisidores
+
+    #region estados
+    private State patrullar;
+    private State golpear;
+    private State cazar;
+    private State luchar;
+    private State morir;
+    #endregion estados
+
+    #region percepciones
+    private Perception skaDescansandoDetectado;
+    private Perception skaGolpeado;
+    private Perception enemigoDetectado;
+    private Perception enemigoAlcanzado;
+    private Perception enemigoFueraDeRango;
+    private Perception enemigoPerdido;
+    private Perception luchaPerdida;
+    private Perception enemigoDerrotado;
+    private Perception metalesBajos;
+
+    #endregion percepciones
 
 
     private void OnGUI()
@@ -39,25 +62,68 @@ public class InquisidoresBehaviour : MonoBehaviour
         //MOSTRAR POR PANTALLA
         GUI.Label(rect, UItxt, style); // display its name, or other string
     }
+    // Start is called before the first frame update
     private void Awake()
     {
         simManager = GameObject.Find("_SimulationManager").GetComponent(typeof(SimulationManager)) as SimulationManager;
         diaNacimiento = simManager.dias;
+        behaviourTree = new BehaviourTreeEngine(BehaviourEngine.IsNotASubmachine);
+        stateMachine = new StateMachineEngine(BehaviourEngine.IsASubmachine);
+        createSubFSM();
+        createBT();
     }
     void Start()
     {
-        createBT();
+
     }
 
     // Update is called once per frame
     void Update()
     {
         behaviourTree.Update();
+        stateMachine.Update();
     }
 
+    private void createSubFSM()
+    {
+
+
+        //Percepciones
+        skaDescansandoDetectado = stateMachine.CreatePerception<PushPerception>();
+        skaGolpeado = stateMachine.CreatePerception<PushPerception>();
+        enemigoDetectado = stateMachine.CreatePerception<PushPerception>();
+        enemigoAlcanzado = stateMachine.CreatePerception<PushPerception>();
+        enemigoFueraDeRango = stateMachine.CreatePerception<PushPerception>();
+        enemigoPerdido = stateMachine.CreatePerception<PushPerception>();
+        luchaPerdida = stateMachine.CreatePerception<PushPerception>();
+        enemigoDerrotado = stateMachine.CreatePerception<PushPerception>();
+        metalesBajos = stateMachine.CreatePerception<PushPerception>();
+
+
+        //Estados
+        patrullar = stateMachine.CreateEntryState("Patrullar", fsmPatrullar);
+        golpear = stateMachine.CreateState("Golpear", fsmGolpear);
+        cazar = stateMachine.CreateState("Cazar", fsmCazar);
+        luchar = stateMachine.CreateState("Luchar", fsmLuchar);
+        morir = stateMachine.CreateState("Morir", fsmMorir);
+
+        //Transiciones
+        stateMachine.CreateTransition("Ska Detectado", patrullar, skaDescansandoDetectado, golpear);
+        stateMachine.CreateTransition("Ska Golpeado", golpear, skaGolpeado, patrullar);
+        stateMachine.CreateTransition("Enemigo Detectado", patrullar, enemigoDetectado, cazar);
+        stateMachine.CreateTransition("Enemigo Perdido", cazar, enemigoPerdido, patrullar);
+        stateMachine.CreateTransition("Enemigo Alcanzado", cazar, enemigoAlcanzado, luchar);
+        stateMachine.CreateTransition("Enemigo Fuera Rango", luchar, enemigoFueraDeRango, cazar);
+        stateMachine.CreateTransition("Enemigo Derrotado", luchar, enemigoDerrotado, patrullar);
+        stateMachine.CreateTransition("Lucha Perdida", luchar, luchaPerdida, morir);
+
+        //Entrada y salida de la FSM
+        subFSM = behaviourTree.CreateSubBehaviour("Sub-FSM", stateMachine, patrullar);
+        stateMachine.CreateExitTransition("Vuelta a BT", patrullar, metalesBajos, ReturnValues.Succeed);
+    }
     private void createBT()
     {
-        behaviourTree = new BehaviourTreeEngine(false);
+
         //Nodos hoja
         LeafNode tengoMetalesLeafNode = behaviourTree.CreateLeafNode("TengoMetales", actTengoMetales, compMetales);
         LeafNode patrullarLeafNode1 = behaviourTree.CreateLeafNode("Patrullar1", actPatrullar1, compPatrullar1);
@@ -69,15 +135,14 @@ public class InquisidoresBehaviour : MonoBehaviour
 
         TimerDecoratorNode timerRecarga = behaviourTree.CreateTimerNode("TimerRecargaMetales", recargarMetales, 5);
         //Sequence node aleatorio
-        SequenceNode patrullarSequenceNode = behaviourTree.CreateSequenceNode("PatrullarSequenceNode", true);
-        patrullarSequenceNode.AddChild(patrullarLeafNode1);
-        patrullarSequenceNode.AddChild(patrullarLeafNode2);
-        patrullarSequenceNode.AddChild(patrullarLeafNode3);
+        //SequenceNode patrullarSequenceNode = behaviourTree.CreateSequenceNode("PatrullarSequenceNode", true);
+        //patrullarSequenceNode.AddChild(subFSM);
 
         //Sequence node comprobar metales
         SequenceNode comprobarMetalesSequenceNode = behaviourTree.CreateSequenceNode("ComprobarMetalesSequenceNode", false);
         comprobarMetalesSequenceNode.AddChild(tengoMetalesLeafNode);
-        comprobarMetalesSequenceNode.AddChild(patrullarSequenceNode);
+        comprobarMetalesSequenceNode.AddChild(subFSM);
+        //comprobarMetalesSequenceNode.AddChild(patrullarSequenceNode);
 
         LoopUntilFailDecoratorNode patrullarUntilFail = behaviourTree.CreateLoopUntilFailNode("PatrullarUntilFail", comprobarMetalesSequenceNode);
 
@@ -93,6 +158,7 @@ public class InquisidoresBehaviour : MonoBehaviour
         behaviourTree.SetRootNode(rootNode);
     }
 
+    #region Metodos BT
     private void actTengoMetales()
     {
 
@@ -121,7 +187,7 @@ public class InquisidoresBehaviour : MonoBehaviour
     }
     private ReturnValues compPatrullar1()
     {
-        
+
         if (this.transform.position.x >= 7.3 && this.transform.position.x <= 8 && this.transform.position.z >= -17 && this.transform.position.z <= -16)
         {
             return ReturnValues.Succeed;
@@ -201,4 +267,37 @@ public class InquisidoresBehaviour : MonoBehaviour
             return ReturnValues.Running;
         }
     }
+    #endregion Metodos BT
+
+    #region Metodos FSM
+    private void fsmPatrullar()
+    {
+        //Estoy patrullando
+        agent.SetDestination(new Vector3(-18f, 1f, 10f));
+        Debug.Log("patrullando");
+    }
+    private void fsmGolpear()
+    {
+        //Golpeeo a un ska
+    }
+    private void fsmCazar()
+    {
+        //Cazo a un brumoso
+    }
+    private void fsmLuchar()
+    {
+        //Lucho
+        if (salud <= 0)
+        {
+            luchaPerdida.Fire();
+        }
+    }
+    private void fsmMorir()
+    {
+        //Muero
+    }
+
+    #endregion Metodos FSM
 }
+
+
