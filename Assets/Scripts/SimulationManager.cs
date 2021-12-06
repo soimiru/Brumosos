@@ -10,15 +10,16 @@ public class SimulationManager : MonoBehaviour
 
     public int dias = 1;
     private int tiempoInicial;
+    bool pausa = false;
 
-    [Header ("Minutos que transcurren en tiempo de juego por cada segundo en la vida real")]
+    [Header("Minutos que transcurren en tiempo de juego por cada segundo en la vida real")]
     public int minutosPorSegundo = 10;   //Minutos que transcurren en tiempo de juego por cada segundo en la vida real
     private float tiempoDelFrameConTimeScale = 0f;
     public float tiempoAMostrarEnSegundos = 0f;
 
     [Header("Estado del día")]
     public Light luz;
-    public enum cicloDNA { DIA, NOCHE, AMANECER}
+    public enum cicloDNA { DIA, NOCHE, AMANECER }
     public cicloDNA ciclo;
 
     // Start is called before the first frame update
@@ -32,7 +33,7 @@ public class SimulationManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+
         //tiempoDelFrameConTimeScale = Time.deltaTime * minutosPorSegundo;
         tiempoDelFrameConTimeScale = Time.deltaTime * Time.timeScale;
 
@@ -54,7 +55,7 @@ public class SimulationManager : MonoBehaviour
         {
             textCiclo.text = "NOCHE";
             ciclo = cicloDNA.NOCHE;
-            luz.color = new Color(0.2396831f, 0.2193396f, 0.2924528f, 1); 
+            luz.color = new Color(0.2396831f, 0.2193396f, 0.2924528f, 1);
         }
         if (tiempoAMostrarEnSegundos > 240 && tiempoAMostrarEnSegundos < 360)
         {
@@ -62,6 +63,8 @@ public class SimulationManager : MonoBehaviour
             ciclo = cicloDNA.AMANECER;
             luz.color = new Color(0.6792453f, 0.4388201f, 0.3556426f, 1);
         }
+
+        
     }
 
     public void ActualizarReloj(float tiempoEnSegundos)
@@ -92,11 +95,20 @@ public class SimulationManager : MonoBehaviour
         Time.timeScale = 1;
         //minutosPorSegundo = 10;
     }
-
-    public void timex2()
+    public void timex10()
     {
-        Time.timeScale = 100;
+        Time.timeScale = 10;
+        //minutosPorSegundo = 10;
+    }
+
+    public void timex50()
+    {
+        Time.timeScale = 50;
         //minutosPorSegundo = 200;
+    }
+
+    public void Pause() {
+        Time.timeScale = 0;
     }
 }
 
