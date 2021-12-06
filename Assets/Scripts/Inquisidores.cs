@@ -8,6 +8,8 @@ public class Inquisidores : MonoBehaviour
     public NavMeshAgent agent;
     private SimulationManager simManager;
     private BehaviourTreeEngine behaviourTree;
+    private StateMachineEngine stateMachine;
+    private LeafNode subFSM;
 
     #region variables Inquisidores
     int salud = 100;
@@ -22,6 +24,7 @@ public class Inquisidores : MonoBehaviour
     }
     void Start()
     {
+        createSubFSM();
         createBT();
     }
 
@@ -31,6 +34,45 @@ public class Inquisidores : MonoBehaviour
         behaviourTree.Update();
     }
 
+    private void createSubFSM()
+    {
+        stateMachine = new StateMachineEngine(BehaviourEngine.IsASubmachine);
+
+        //Percepciones
+        Perception skaDescansandoDetectado = stateMachine.CreatePerception<PushPerception>();
+        Perception skaGolpeado = stateMachine.CreatePerception<PushPerception>();
+        Perception enemigoDetectado = stateMachine.CreatePerception<PushPerception>();
+        Perception enemigoAlcanzado = stateMachine.CreatePerception<PushPerception>();
+        Perception enemigoFueraDeRango = stateMachine.CreatePerception<PushPerception>();
+        Perception enemigoPerdido = stateMachine.CreatePerception<PushPerception>();
+        Perception luchaPerdida = stateMachine.CreatePerception<PushPerception>();
+        Perception enemigoDerrotado = stateMachine.CreatePerception<PushPerception>();
+        Perception metalesBajos = stateMachine.CreatePerception<PushPerception>();
+
+
+        //Estados
+        State patrullar = stateMachine.CreateEntryState("Patrullar", fsmPatrullar);
+        State golpear = stateMachine.CreateState("Golpear", fsmGolpear);
+        State cazar = stateMachine.CreateState("Cazar", fsmCazar);
+        State luchar = stateMachine.CreateState("Luchar", fsmLuchar);
+        State morir = stateMachine.CreateState("Morir", fsmMorir);
+
+        //Transiciones
+        stateMachine.CreateTransition("Ska Detectado", patrullar, skaDescansandoDetectado, golpear);
+        stateMachine.CreateTransition("Ska Golpeado", golpear, skaGolpeado, patrullar);
+        stateMachine.CreateTransition("Enemigo Detectado", patrullar, enemigoDetectado, cazar);
+        stateMachine.CreateTransition("Enemigo Perdido", cazar, enemigoPerdido, patrullar);
+        stateMachine.CreateTransition("Enemigo Alcanzado", cazar, enemigoAlcanzado, luchar);
+        stateMachine.CreateTransition("Enemigo Fuera Rango", luchar, enemigoFueraDeRango, cazar);
+        stateMachine.CreateTransition("Enemigo Derrotado", luchar, enemigoDerrotado, patrullar);
+        stateMachine.CreateTransition("Lucha Perdida", luchar, luchaPerdida, morir);
+
+        //Entrada y salida de la FSM
+        subFSM = behaviourTree.CreateSubBehaviour("Sub-FSM", stateMachine, patrullar);
+        stateMachine.CreateExitTransition("Vuelta a BT", patrullar, metalesBajos, ReturnValues.Succeed);
+
+
+    }
     private void createBT()
     {
         behaviourTree = new BehaviourTreeEngine(false);
@@ -46,9 +88,7 @@ public class Inquisidores : MonoBehaviour
         TimerDecoratorNode timerRecarga = behaviourTree.CreateTimerNode("TimerRecargaMetales", recargarMetales, 5);
         //Sequence node aleatorio
         SequenceNode patrullarSequenceNode = behaviourTree.CreateSequenceNode("PatrullarSequenceNode", true);
-        patrullarSequenceNode.AddChild(patrullarLeafNode1);
-        patrullarSequenceNode.AddChild(patrullarLeafNode2);
-        patrullarSequenceNode.AddChild(patrullarLeafNode3);
+        patrullarSequenceNode.AddChild(subFSM);
 
         //Sequence node comprobar metales
         SequenceNode comprobarMetalesSequenceNode = behaviourTree.CreateSequenceNode("ComprobarMetalesSequenceNode", false);
@@ -69,6 +109,7 @@ public class Inquisidores : MonoBehaviour
         behaviourTree.SetRootNode(rootNode);
     }
 
+    #region Metodos BT
     private void actTengoMetales()
     {
 
@@ -177,4 +218,29 @@ public class Inquisidores : MonoBehaviour
             return ReturnValues.Running;
         }
     }
+    #endregion Metodos BT
+
+    #region Metodos FSM
+    private void fsmPatrullar()
+    {
+
+    }
+    private void fsmGolpear()
+    {
+
+    }
+    private void fsmCazar()
+    {
+
+    }
+    private void fsmLuchar()
+    {
+
+    }
+    private void fsmMorir()
+    {
+
+    }
+
+    #endregion Metodos FSM
 }
