@@ -18,12 +18,25 @@ public class InquisidoresBehaviour : MonoBehaviour
     private int diaNacimiento;
     #endregion variables Inquisidores
 
+    #region variables Patrulla
+    public Transform target;
+    public float attackRadius = 30.0f;
+    public Transform[] destinations;
+    private int currentPoint = 0;
+    [SerializeField] float timer;
+    [SerializeField] float maxTime;
+    [SerializeField] bool inRange;
+    public Vector3[] destinos;
+    private bool first = true;
+    #endregion variables Patrulla
+
     #region estados
     private State patrullar;
     private State golpear;
     private State cazar;
     private State luchar;
     private State morir;
+    private State aux;
     #endregion estados
 
     #region percepciones
@@ -36,6 +49,8 @@ public class InquisidoresBehaviour : MonoBehaviour
     private Perception luchaPerdida;
     private Perception enemigoDerrotado;
     private Perception metalesBajos;
+    private Perception patrullaCompleta;
+    private Perception timerAux;
 
     #endregion percepciones
 
@@ -66,9 +81,13 @@ public class InquisidoresBehaviour : MonoBehaviour
     private void Awake()
     {
         simManager = GameObject.Find("_SimulationManager").GetComponent(typeof(SimulationManager)) as SimulationManager;
+       
         diaNacimiento = simManager.dias;
         behaviourTree = new BehaviourTreeEngine(BehaviourEngine.IsNotASubmachine);
         stateMachine = new StateMachineEngine(BehaviourEngine.IsASubmachine);
+
+        
+
         createSubFSM();
         createBT();
     }
@@ -98,6 +117,8 @@ public class InquisidoresBehaviour : MonoBehaviour
         luchaPerdida = stateMachine.CreatePerception<PushPerception>();
         enemigoDerrotado = stateMachine.CreatePerception<PushPerception>();
         metalesBajos = stateMachine.CreatePerception<PushPerception>();
+        patrullaCompleta = stateMachine.CreatePerception<PushPerception>();
+        timerAux = stateMachine.CreatePerception<TimerPerception>(0.5f);
 
 
         //Estados
@@ -106,9 +127,13 @@ public class InquisidoresBehaviour : MonoBehaviour
         cazar = stateMachine.CreateState("Cazar", fsmCazar);
         luchar = stateMachine.CreateState("Luchar", fsmLuchar);
         morir = stateMachine.CreateState("Morir", fsmMorir);
+        aux = stateMachine.CreateState("Aux", fsmAux);
 
         //Transiciones
         stateMachine.CreateTransition("Ska Detectado", patrullar, skaDescansandoDetectado, golpear);
+        stateMachine.CreateTransition("Repatrullar", patrullar, patrullaCompleta, aux);
+        stateMachine.CreateTransition("Timer Aux", aux, timerAux, patrullar);
+
         stateMachine.CreateTransition("Ska Golpeado", golpear, skaGolpeado, patrullar);
         stateMachine.CreateTransition("Enemigo Detectado", patrullar, enemigoDetectado, cazar);
         stateMachine.CreateTransition("Enemigo Perdido", cazar, enemigoPerdido, patrullar);
@@ -117,9 +142,10 @@ public class InquisidoresBehaviour : MonoBehaviour
         stateMachine.CreateTransition("Enemigo Derrotado", luchar, enemigoDerrotado, patrullar);
         stateMachine.CreateTransition("Lucha Perdida", luchar, luchaPerdida, morir);
 
+
         //Entrada y salida de la FSM
         subFSM = behaviourTree.CreateSubBehaviour("Sub-FSM", stateMachine, patrullar);
-        stateMachine.CreateExitTransition("Vuelta a BT", patrullar, metalesBajos, ReturnValues.Succeed);
+        stateMachine.CreateExitTransition("Vuelta a BT", aux, metalesBajos, ReturnValues.Succeed);
     }
     private void createBT()
     {
@@ -273,8 +299,38 @@ public class InquisidoresBehaviour : MonoBehaviour
     private void fsmPatrullar()
     {
         //Estoy patrullando
-        agent.SetDestination(new Vector3(-18f, 1f, 10f));
-        Debug.Log("patrullando");
+        //float distTo = Vector3.Distance(transform.position, target.position);
+        //Debug.Log(currentPoint);
+        float distTo = 200;
+
+        if (distTo <= attackRadius)
+        {
+            timer += Time.deltaTime;
+            if (timer > maxTime)
+            {
+                inRange = true;
+                enemigoDetectado.Fire();
+            }
+            else
+            {
+                inRange = false;
+            }
+        }
+
+        if (!inRange && this.transform.position.x == agent.destination.x && this.transform.position.z == agent.destination.z || first == true)
+        {
+
+            first = false;
+            updateCurrentPoint();
+            Vector3 newPos = destinos[currentPoint];
+            agent.SetDestination(newPos);
+            Debug.Log(destinos[currentPoint]);
+            Debug.Log(agent.destination);
+            metales -= 20;
+            
+            
+        }
+        patrullaCompleta.Fire();
     }
     private void fsmGolpear()
     {
@@ -283,6 +339,17 @@ public class InquisidoresBehaviour : MonoBehaviour
     private void fsmCazar()
     {
         //Cazo a un brumoso
+        float distTo = Vector3.Distance(transform.position, target.position);
+
+        transform.LookAt(target);
+        Vector3 moveTo = Vector3.MoveTowards(transform.position, target.position, 180f);
+        agent.SetDestination(moveTo);
+
+        if (distTo > attackRadius)
+        {
+            enemigoFueraDeRango.Fire();
+        }
+
     }
     private void fsmLuchar()
     {
@@ -298,6 +365,26 @@ public class InquisidoresBehaviour : MonoBehaviour
     }
 
     #endregion Metodos FSM
+
+    private void updateCurrentPoint()
+    {
+        if (currentPoint == destinos.Length - 1)
+        {
+            currentPoint = 0;
+        }
+        else
+        {
+            currentPoint++;
+        }
+    }
+    private void fsmAux()
+    {
+        Debug.Log("estoy en aux");
+        if (metales <= 0)
+        {
+            metalesBajos.Fire();
+        }
+    }
 }
 
 

@@ -7258,6 +7258,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   agent: {fileID: 1186501140}
+  target: {fileID: 452694728}
+  attackRadius: 1
+  destinations:
+  - {fileID: 877288088}
+  - {fileID: 1822261347}
+  - {fileID: 1575220880}
+  - {fileID: 1350551432}
+  - {fileID: 439493832}
+  timer: 0
+  maxTime: 8
+  inRange: 0
 --- !u!195 &1186501140
 NavMeshAgent:
   m_ObjectHideFlags: 0
