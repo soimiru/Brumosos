@@ -20,6 +20,7 @@ public class InquisidoresBehaviour : MonoBehaviour
 
     #region variables Patrulla
     public Transform target;
+    public Transform targetSka;
     public float attackRadius = 30.0f;
     public Transform[] destinations;
     private int currentPoint = 0;
@@ -37,6 +38,8 @@ public class InquisidoresBehaviour : MonoBehaviour
     private State luchar;
     private State morir;
     private State aux;
+    private State cazarAux;
+    private State golpearAux;
     #endregion estados
 
     #region percepciones
@@ -51,6 +54,8 @@ public class InquisidoresBehaviour : MonoBehaviour
     private Perception metalesBajos;
     private Perception patrullaCompleta;
     private Perception timerAux;
+    private Perception timerCaza;
+    private Perception golpearAuxP;
 
     #endregion percepciones
 
@@ -85,9 +90,6 @@ public class InquisidoresBehaviour : MonoBehaviour
         diaNacimiento = simManager.dias;
         behaviourTree = new BehaviourTreeEngine(BehaviourEngine.IsNotASubmachine);
         stateMachine = new StateMachineEngine(BehaviourEngine.IsASubmachine);
-
-        
-
         createSubFSM();
         createBT();
     }
@@ -119,6 +121,9 @@ public class InquisidoresBehaviour : MonoBehaviour
         metalesBajos = stateMachine.CreatePerception<PushPerception>();
         patrullaCompleta = stateMachine.CreatePerception<PushPerception>();
         timerAux = stateMachine.CreatePerception<TimerPerception>(0.5f);
+        timerCaza = stateMachine.CreatePerception<TimerPerception>(0.5f);
+        golpearAuxP = stateMachine.CreatePerception<PushPerception>();
+
 
 
         //Estados
@@ -128,15 +133,25 @@ public class InquisidoresBehaviour : MonoBehaviour
         luchar = stateMachine.CreateState("Luchar", fsmLuchar);
         morir = stateMachine.CreateState("Morir", fsmMorir);
         aux = stateMachine.CreateState("Aux", fsmAux);
+        cazarAux = stateMachine.CreateState("CazarAux", fsmAux);
+        golpearAux = stateMachine.CreateState("GolpearAux", fsmGolpearAux);
 
         //Transiciones
         stateMachine.CreateTransition("Ska Detectado", patrullar, skaDescansandoDetectado, golpear);
+        stateMachine.CreateTransition("Ska Golpeado", golpear, skaGolpeado, golpearAux);
+        stateMachine.CreateTransition("Ska Golpeado 2", golpear, timerAux, golpear);
+        stateMachine.CreateTransition("Ska Golpeado aux", golpearAux, golpearAuxP, patrullar);
+        stateMachine.CreateTransition("Ska Golpeado aux2", golpearAux, timerAux, golpearAux);
         stateMachine.CreateTransition("Repatrullar", patrullar, patrullaCompleta, aux);
         stateMachine.CreateTransition("Timer Aux", aux, timerAux, patrullar);
 
-        stateMachine.CreateTransition("Ska Golpeado", golpear, skaGolpeado, patrullar);
+
         stateMachine.CreateTransition("Enemigo Detectado", patrullar, enemigoDetectado, cazar);
         stateMachine.CreateTransition("Enemigo Perdido", cazar, enemigoPerdido, patrullar);
+
+        stateMachine.CreateTransition("Cazando", cazar, timerCaza, cazarAux);
+        stateMachine.CreateTransition("CazandoAux", cazarAux, timerCaza, cazar);
+
         stateMachine.CreateTransition("Enemigo Alcanzado", cazar, enemigoAlcanzado, luchar);
         stateMachine.CreateTransition("Enemigo Fuera Rango", luchar, enemigoFueraDeRango, cazar);
         stateMachine.CreateTransition("Enemigo Derrotado", luchar, enemigoDerrotado, patrullar);
@@ -152,23 +167,18 @@ public class InquisidoresBehaviour : MonoBehaviour
 
         //Nodos hoja
         LeafNode tengoMetalesLeafNode = behaviourTree.CreateLeafNode("TengoMetales", actTengoMetales, compMetales);
-        LeafNode patrullarLeafNode1 = behaviourTree.CreateLeafNode("Patrullar1", actPatrullar1, compPatrullar1);
-        LeafNode patrullarLeafNode2 = behaviourTree.CreateLeafNode("Patrullar2", actPatrullar2, compPatrullar2);
-        LeafNode patrullarLeafNode3 = behaviourTree.CreateLeafNode("Patrullar3", actPatrullar3, compPatrullar3);
+
 
         LeafNode irAlMinisterio = behaviourTree.CreateLeafNode("IrAMinisterio", actIrAMinisterio, comprobarMinisterio);
         LeafNode recargarMetales = behaviourTree.CreateLeafNode("RecargarMetales", actRecargarMetales, comprobarMetalesRecargados);
 
         TimerDecoratorNode timerRecarga = behaviourTree.CreateTimerNode("TimerRecargaMetales", recargarMetales, 5);
-        //Sequence node aleatorio
-        //SequenceNode patrullarSequenceNode = behaviourTree.CreateSequenceNode("PatrullarSequenceNode", true);
-        //patrullarSequenceNode.AddChild(subFSM);
+
 
         //Sequence node comprobar metales
         SequenceNode comprobarMetalesSequenceNode = behaviourTree.CreateSequenceNode("ComprobarMetalesSequenceNode", false);
         comprobarMetalesSequenceNode.AddChild(tengoMetalesLeafNode);
         comprobarMetalesSequenceNode.AddChild(subFSM);
-        //comprobarMetalesSequenceNode.AddChild(patrullarSequenceNode);
 
         LoopUntilFailDecoratorNode patrullarUntilFail = behaviourTree.CreateLoopUntilFailNode("PatrullarUntilFail", comprobarMetalesSequenceNode);
 
@@ -202,67 +212,7 @@ public class InquisidoresBehaviour : MonoBehaviour
         }
     }
 
-    private void actPatrullar1()
-    {
-        agent.SetDestination(new Vector3(7.5f, 1f, -16.5f));
-        metales -= 35;
-        if (metales < 0)
-        {
-            metales = 0;
-        }
-    }
-    private ReturnValues compPatrullar1()
-    {
-
-        if (this.transform.position.x >= 7.3 && this.transform.position.x <= 8 && this.transform.position.z >= -17 && this.transform.position.z <= -16)
-        {
-            return ReturnValues.Succeed;
-        }
-        else
-        {
-            return ReturnValues.Running;
-        }
-    }
-    private void actPatrullar2()
-    {
-        agent.SetDestination(new Vector3(15.5f, 1f, 7.5f));
-        metales -= 35;
-        if (metales < 0)
-        {
-            metales = 0;
-        }
-    }
-    private ReturnValues compPatrullar2()
-    {
-        if (this.transform.position.x >= 15 && this.transform.position.x <= 16 && this.transform.position.z >= 7 && this.transform.position.z <= 8)
-        {
-            return ReturnValues.Succeed;
-        }
-        else
-        {
-            return ReturnValues.Running;
-        }
-    }
-    private void actPatrullar3()
-    {
-        agent.SetDestination(new Vector3(-18f, 1f, 10f));
-        metales -= 35;
-        if (metales < 0)
-        {
-            metales = 0;
-        }
-    }
-    private ReturnValues compPatrullar3()
-    {
-        if (this.transform.position.x >= -18.5 && this.transform.position.x <= -17.5 && this.transform.position.z >= 9.5 && this.transform.position.z <= 10.5)
-        {
-            return ReturnValues.Succeed;
-        }
-        else
-        {
-            return ReturnValues.Running;
-        }
-    }
+    
     private void actIrAMinisterio()
     {
         agent.SetDestination(new Vector3(-21.5f, 1f, -13f));
@@ -299,55 +249,57 @@ public class InquisidoresBehaviour : MonoBehaviour
     private void fsmPatrullar()
     {
         //Estoy patrullando
-        //float distTo = Vector3.Distance(transform.position, target.position);
-        //Debug.Log(currentPoint);
-        float distTo = 200;
+        float distToEnemy = Vector3.Distance(transform.position, target.position);
+        float distToSkaa = Vector3.Distance(transform.position, targetSka.position);
 
-        if (distTo <= attackRadius)
+        if (distToEnemy <= attackRadius)
         {
-            timer += Time.deltaTime;
-            if (timer > maxTime)
-            {
-                inRange = true;
-                enemigoDetectado.Fire();
-            }
-            else
-            {
-                inRange = false;
-            }
+            Debug.Log("enemigo a rango");
+            enemigoDetectado.Fire();
+        }
+        if (distToSkaa <= attackRadius)
+        {
+            Debug.Log("Skaa a rango");
+            skaDescansandoDetectado.Fire();
         }
 
         if (!inRange && this.transform.position.x == agent.destination.x && this.transform.position.z == agent.destination.z || first == true)
         {
-
             first = false;
             updateCurrentPoint();
             Vector3 newPos = destinos[currentPoint];
             agent.SetDestination(newPos);
-            Debug.Log(destinos[currentPoint]);
-            Debug.Log(agent.destination);
-            metales -= 20;
-            
-            
+            metales -= 5;
         }
         patrullaCompleta.Fire();
     }
     private void fsmGolpear()
     {
-        //Golpeeo a un ska
+        float distTo = Vector3.Distance(transform.position, targetSka.position);
+        transform.LookAt(target);
+        Vector3 moveTo = Vector3.MoveTowards(transform.position, targetSka.position, 180f);
+        agent.SetDestination(moveTo);
+        //Le da un palo
+        if (distTo < 2)
+        {
+            updateCurrentPoint();
+            Vector3 newPos = destinos[currentPoint];
+            agent.SetDestination(newPos);
+            metales -= 5;
+            skaGolpeado.Fire();
+        }
+        
     }
     private void fsmCazar()
     {
         //Cazo a un brumoso
         float distTo = Vector3.Distance(transform.position, target.position);
-
         transform.LookAt(target);
         Vector3 moveTo = Vector3.MoveTowards(transform.position, target.position, 180f);
         agent.SetDestination(moveTo);
-
         if (distTo > attackRadius)
         {
-            enemigoFueraDeRango.Fire();
+            enemigoPerdido.Fire();
         }
 
     }
@@ -379,10 +331,18 @@ public class InquisidoresBehaviour : MonoBehaviour
     }
     private void fsmAux()
     {
-        Debug.Log("estoy en aux");
+        //Debug.Log("estoy en aux");
         if (metales <= 0)
         {
             metalesBajos.Fire();
+        }
+    }
+    private void fsmGolpearAux()
+    {
+        if (!inRange && this.transform.position.x == agent.destination.x && this.transform.position.z == agent.destination.z || first == true)
+        {
+            first = true;
+            golpearAuxP.Fire();
         }
     }
 }
