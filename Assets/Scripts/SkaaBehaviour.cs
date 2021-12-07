@@ -4,9 +4,12 @@ using UnityEngine.AI;
 public class SkaaBehaviour : MonoBehaviour
 {
     public NavMeshAgent agent;
+    public NavigationPoints navigation;
     private SimulationManager simManager;
     private BehaviourTreeEngine behaviourTree;
-    StateMachineEngine childFSM = new StateMachineEngine();
+    StateMachineEngine childFSM;
+    StateMachineEngine adultFSM;
+    LeafNode trabajarSubFsm;
     string UItxt = "";
 
     #region variables Ska
@@ -14,11 +17,19 @@ public class SkaaBehaviour : MonoBehaviour
     int cansancio = 0;
     private int diaNacimiento;
     private bool adulto = false;
-    
+    int recursos = 0;
 
     #endregion variables Ska
 
-
+    #region percepcionesTrabajar
+    Perception recursosRecogidos;
+    Perception recursosAgotados;
+    Perception puestoTrabajo;
+    Perception puestoRecogida;
+    Perception timerAux;
+    Perception estoyCansado;
+    
+    #endregion percepcionesTrabajar
     private void OnGUI()
     {
         //TEXTO A MOSTRAR
@@ -46,30 +57,17 @@ public class SkaaBehaviour : MonoBehaviour
     {
         simManager = GameObject.Find("_SimulationManager").GetComponent(typeof(SimulationManager)) as SimulationManager;
         diaNacimiento = simManager.dias;
+
+        behaviourTree = new BehaviourTreeEngine(BehaviourEngine.IsNotASubmachine);
+        childFSM = new StateMachineEngine();
+        adultFSM = new StateMachineEngine(BehaviourEngine.IsASubmachine);
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        //Maquina de estados de cuando el agente es niño
-
-        //Estados
-        //State nacerState = childFSM.CreateEntryState("Nacer", nacerAction);
-        State estudiarState = childFSM.CreateEntryState("Estudiar", estudiarAction);
-        State dormirState = childFSM.CreateState("Dormir", dormirAction);
-        State crecerState = childFSM.CreateState("CrecerA", crecerAction);
-
-        //Percepciones
-        Perception nacimiento = childFSM.CreatePerception<TimerPerception>(1);
-        Perception hacerNoche = childFSM.CreatePerception<PushPerception>();
-        Perception hacerDia = childFSM.CreatePerception<PushPerception>();
-        Perception crecer = childFSM.CreatePerception<PushPerception>();
-
-        //Transiciones
-        childFSM.CreateTransition("Dormir", estudiarState, hacerNoche, dormirState);
-        childFSM.CreateTransition("Estudiar", dormirState, hacerDia, estudiarState);
-        childFSM.CreateTransition("Crecer", dormirState, crecer, crecerState);
-
+        createFSMChild();
+        createFSMAdult();
     }
 
     // Update is called once per frame
@@ -78,7 +76,6 @@ public class SkaaBehaviour : MonoBehaviour
         if (adulto == false)
         {
             FSMChild();
-
         }
         else
         {
@@ -89,7 +86,6 @@ public class SkaaBehaviour : MonoBehaviour
     }
     private void createBT()
     {
-        behaviourTree = new BehaviourTreeEngine(false);
 
         //Nodos hoja
         LeafNode tengoSaludLeafNode = behaviourTree.CreateLeafNode("TengoSalud", actSalud, comprobarSalud); 
@@ -116,7 +112,7 @@ public class SkaaBehaviour : MonoBehaviour
 
         //Nodo secuencia 1**
         SequenceNode trabajarYEsperarSequenceNode = behaviourTree.CreateSequenceNode("TrabajarYEsperarSequenceNode", false);
-        trabajarYEsperarSequenceNode.AddChild(trabajarLeafNode);
+        trabajarYEsperarSequenceNode.AddChild(trabajarSubFsm);
         trabajarYEsperarSequenceNode.AddChild(timerNodeTrabajar);
 
         //Nodo selector 1
@@ -155,6 +151,58 @@ public class SkaaBehaviour : MonoBehaviour
         LoopDecoratorNode rootNode = behaviourTree.CreateLoopNode("RootNode", baseSelectorNode);
         behaviourTree.SetRootNode(rootNode);
 
+    }
+    private void createFSMChild()
+    {
+        //Maquina de estados de cuando el agente es niño
+        //Estados
+        State estudiarState = childFSM.CreateEntryState("Estudiar", estudiarAction);
+        State dormirState = childFSM.CreateState("Dormir", dormirAction);
+        State crecerState = childFSM.CreateState("CrecerA", crecerAction);
+
+        //Percepciones
+        Perception nacimiento = childFSM.CreatePerception<TimerPerception>(1);
+        Perception hacerNoche = childFSM.CreatePerception<PushPerception>();
+        Perception hacerDia = childFSM.CreatePerception<PushPerception>();
+        Perception crecer = childFSM.CreatePerception<PushPerception>();
+
+        //Transiciones
+        childFSM.CreateTransition("Dormir", estudiarState, hacerNoche, dormirState);
+        childFSM.CreateTransition("Estudiar", dormirState, hacerDia, estudiarState);
+        childFSM.CreateTransition("Crecer", dormirState, crecer, crecerState);
+    }
+    private void createFSMAdult()
+    {
+        //FSM de trabajar
+        //Percepciones
+        recursosRecogidos = adultFSM.CreatePerception<PushPerception>();
+        recursosAgotados = adultFSM.CreatePerception<PushPerception>();
+        puestoTrabajo = adultFSM.CreatePerception<PushPerception>();
+        puestoRecogida = adultFSM.CreatePerception<PushPerception>();
+        estoyCansado = adultFSM.CreatePerception<PushPerception>();
+        timerAux = adultFSM.CreatePerception<TimerPerception>(1);
+
+
+        //Estados
+        State irAPorRecursos = adultFSM.CreateState("Ir a por Recursos", irARecogerRecursosFSM);
+        State recogiendoRecursos = adultFSM.CreateState("Recogiendo Recursos", recogerRecursosFSM);
+        State irAUsarRecursos = adultFSM.CreateEntryState("Ir a usar Recursos", irAUsarRecursosFSM);
+        State usandoRecursos = adultFSM.CreateState("Usando Recursos", usandoRecursosFSM);
+
+        //Transiciones
+        adultFSM.CreateTransition("Recursos recogidos", recogiendoRecursos, recursosRecogidos, irAUsarRecursos);
+        adultFSM.CreateTransition("Recursos gastados", usandoRecursos, recursosAgotados, irAPorRecursos);
+        adultFSM.CreateTransition("Puesto recogida", irAPorRecursos, puestoRecogida, recogiendoRecursos);
+        adultFSM.CreateTransition("Puesto trabajo", irAUsarRecursos, puestoTrabajo, usandoRecursos);
+
+        //adultFSM.CreateTransition("Timer Aux 1", irAUsarRecursos, timerAux, irAUsarRecursos);
+        adultFSM.CreateTransition("Timer Aux 2", recogiendoRecursos, timerAux, recogiendoRecursos);
+        adultFSM.CreateTransition("Timer Aux 3", usandoRecursos, timerAux, usandoRecursos);
+        //adultFSM.CreateTransition("Timer Aux 4", irAPorRecursos, timerAux, irAPorRecursos);
+
+        trabajarSubFsm = behaviourTree.CreateSubBehaviour("Sub FSM Trabajar", adultFSM, irAUsarRecursos);
+        adultFSM.CreateExitTransition("Vuelta a BT", usandoRecursos, estoyCansado, ReturnValues.Succeed);
+        adultFSM.CreateExitTransition("Vuelta a BT 2", recogiendoRecursos, estoyCansado, ReturnValues.Succeed);
     }
 
     void FSMChild()
@@ -365,4 +413,67 @@ public class SkaaBehaviour : MonoBehaviour
         }
     }
     #endregion accionesBT
+
+    #region FSM Adulto
+    private void irAUsarRecursosFSM()
+    {
+        agent.SetDestination(navigation.goToFabrica());
+        puestoTrabajo.Fire();
+    }
+    private void usandoRecursosFSM()
+    {
+        if (navigation.comprobarPosFabrica(this.transform.position))
+        {
+            if (cansancio >= 100)
+            {
+                estoyCansado.Fire();
+            }
+            else
+            {
+                if (recursos <= 10)
+                {
+                    recursosAgotados.Fire();
+                }
+                else
+                {
+                    recursos -= 10;
+                    cansancio += 10;
+                    Debug.Log("Estoy trabajando");
+                }
+            }
+        }
+    }
+    private void irARecogerRecursosFSM()
+    {
+        agent.SetDestination(new Vector3(-3.5f, 1.0f, 21.0f));
+        puestoRecogida.Fire();
+    }
+    private void recogerRecursosFSM()
+    {
+        if (this.transform.position.x == -3.5f && this.transform.position.z == 21.0f)
+        {
+            if (cansancio >= 100)
+            {
+                estoyCansado.Fire();
+            }
+            else
+            {
+                if (recursos >= 80)
+                {
+                    recursosRecogidos.Fire();
+                }
+                else
+                {
+                    recursos += 20;
+                    cansancio += 5;
+                    Debug.Log("Estoy recogiendo recursos");
+                }
+            }
+        }
+    }
+    
+    
+
+
+    #endregion FSM Adulto
 }

@@ -2954,6 +2954,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   agent: {fileID: 452694734}
+  navigation: {fileID: 0}
 --- !u!195 &452694734
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -7258,8 +7259,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   agent: {fileID: 1186501140}
-  target: {fileID: 452694728}
-  attackRadius: 20
+  target: {fileID: 1649839332}
+  targetSka: {fileID: 452694728}
+  attackRadius: 5
   destinations:
   - {fileID: 877288088}
   - {fileID: 1822261347}
