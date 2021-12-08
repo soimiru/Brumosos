@@ -70,12 +70,13 @@ public class InquisidoresBehaviour : MonoBehaviour
         //ESTILO DE LA CAJA DE TEXTO
         GUIStyle style = new GUIStyle();
         Texture2D debugTex = new Texture2D(1, 1);
-        debugTex.SetPixel(0, 0, new Color(1f, 1f, 1f, 0.2f));
+        debugTex.SetPixel(0, 0, new Color(0.7f, 0.75f, 1f, 0.5f));
+        debugTex.Apply();
         style.normal.background = debugTex;
         style.fontSize = 30;
 
         //TAMAÑO Y POSICION
-        Rect rect = new Rect(0, 0, 300, 100);
+        Rect rect = new Rect(0, 0, 330, 140);
         Vector3 offset = new Vector3(0f, 0.5f, 0f); // height above the target position
         Vector3 point = Camera.main.WorldToScreenPoint(this.transform.position + offset);
         rect.x = point.x - 150;
