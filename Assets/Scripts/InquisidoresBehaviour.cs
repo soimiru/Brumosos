@@ -108,8 +108,6 @@ public class InquisidoresBehaviour : MonoBehaviour
 
     private void createSubFSM()
     {
-
-
         //Percepciones
         skaDescansandoDetectado = stateMachine.CreatePerception<PushPerception>();
         skaGolpeado = stateMachine.CreatePerception<PushPerception>();
@@ -216,6 +214,7 @@ public class InquisidoresBehaviour : MonoBehaviour
     
     private void actIrAMinisterio()
     {
+        accion = "Volviendo al ministerio";
         agent.SetDestination(new Vector3(-21.5f, 1f, -13f));
     }
     private ReturnValues comprobarMinisterio()
@@ -231,6 +230,7 @@ public class InquisidoresBehaviour : MonoBehaviour
     }
     private void actRecargarMetales()
     {
+        accion = "Recargando metales";
         metales = 100;
     }
     private ReturnValues comprobarMetalesRecargados()
@@ -255,12 +255,14 @@ public class InquisidoresBehaviour : MonoBehaviour
 
         if (distToEnemy <= attackRadius)
         {
-            Debug.Log("enemigo a rango");
+            accion = "Cazando";
+            //Debug.Log("enemigo a rango");
             enemigoDetectado.Fire();
         }
         if (distToSkaa <= attackRadius)
         {
-            Debug.Log("Skaa a rango");
+            accion = "Skaa detectado";
+            //Debug.Log("Skaa a rango");
             skaDescansandoDetectado.Fire();
         }
 
@@ -272,10 +274,12 @@ public class InquisidoresBehaviour : MonoBehaviour
             agent.SetDestination(newPos);
             metales -= 5;
         }
+        accion = "Patrullando";
         patrullaCompleta.Fire();
     }
     private void fsmGolpear()
     {
+        accion = "Cazando a un Skaa";
         float distTo = Vector3.Distance(transform.position, targetSka.position);
         transform.LookAt(target);
         Vector3 moveTo = Vector3.MoveTowards(transform.position, targetSka.position, 180f);
@@ -294,6 +298,7 @@ public class InquisidoresBehaviour : MonoBehaviour
     private void fsmCazar()
     {
         //Cazo a un brumoso
+        accion = "Cazando brumoso";
         float distTo = Vector3.Distance(transform.position, target.position);
         transform.LookAt(target);
         Vector3 moveTo = Vector3.MoveTowards(transform.position, target.position, 180f);
@@ -306,6 +311,7 @@ public class InquisidoresBehaviour : MonoBehaviour
     }
     private void fsmLuchar()
     {
+        accion = "Luchando";
         //Lucho
         if (salud <= 0)
         {
@@ -316,9 +322,6 @@ public class InquisidoresBehaviour : MonoBehaviour
     {
         //Muero
     }
-
-    #endregion Metodos FSM
-
     private void updateCurrentPoint()
     {
         if (currentPoint == destinos.Length - 1)
@@ -340,12 +343,16 @@ public class InquisidoresBehaviour : MonoBehaviour
     }
     private void fsmGolpearAux()
     {
+        accion = "Skaa golpeado \nVolviendo a patrullar";
         if (!inRange && this.transform.position.x == agent.destination.x && this.transform.position.z == agent.destination.z || first == true)
         {
             first = true;
             golpearAuxP.Fire();
         }
     }
+    #endregion Metodos FSM
+
+
 }
 
 

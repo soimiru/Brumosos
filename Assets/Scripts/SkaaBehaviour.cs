@@ -233,14 +233,13 @@ public class SkaaBehaviour : MonoBehaviour
     #region FSM Child
     void estudiarAction()
     {
-        //agent.SetDestination(new Vector3(12f, 1f, -20f));
         agent.SetDestination(new Vector3(-2.5f, 1f, 8f));
-        Debug.Log("ESTUDIANDO");
+        accion = "Estudiando";
     }
     void dormirAction()
     {
         agent.SetDestination(new Vector3(18f, 1f, -20f));
-        Debug.Log("DURMIENDO");
+        accion = "Durmiendo";
     }
     void nacerAction()
     {
@@ -251,7 +250,6 @@ public class SkaaBehaviour : MonoBehaviour
         transform.localScale = new Vector3(1, 1, 1);
         adulto = true;
         createBT();
-        //Debug.Log("He cresido");
     }
     #endregion FSM Child
 
@@ -265,24 +263,24 @@ public class SkaaBehaviour : MonoBehaviour
         Debug.Log("Compruebo Salud");
         if (salud > 0 )
         {
-            Debug.Log("Salud bien");
+            //Debug.Log("Salud bien");
             return ReturnValues.Succeed;
         }
         else
         {
-            Debug.Log("Salud mal");
+           //Debug.Log("Salud mal");
             return ReturnValues.Failed;
         }
     }
     private void actDia()
     {
-        Debug.Log("Compruebo Dia");
+        //Debug.Log("Compruebo Dia");
     }
     private ReturnValues comprobarDia()
     {
         if (simManager.ciclo == SimulationManager.cicloDNA.DIA)
         {
-            Debug.Log("Es de dia");
+            //Debug.Log("Es de dia");
             return ReturnValues.Succeed;
         }
         else
@@ -293,7 +291,7 @@ public class SkaaBehaviour : MonoBehaviour
 
     private void actNoche()
     {
-        Debug.Log("Compruebo Noche");
+        //Debug.Log("Compruebo Noche");
     }
     private ReturnValues comprobarNoche()
     {
@@ -309,18 +307,18 @@ public class SkaaBehaviour : MonoBehaviour
 
     private void actCansado()
     {
-        Debug.Log("Compruebo cansancio");
+        //Debug.Log("Compruebo cansancio");
     }
     private ReturnValues comprobarCansado()
     {
         if (cansancio >= 50)
         {
-            Debug.Log("Cansancio alto");
+            //Debug.Log("Cansancio alto");
             return ReturnValues.Succeed;
         }
         else
         {
-            Debug.Log("Cansancio bajo");
+            //Debug.Log("Cansancio bajo");
             return ReturnValues.Failed;
         }
     }
@@ -329,8 +327,7 @@ public class SkaaBehaviour : MonoBehaviour
     {
         //Programar la acción de descansar
         agent.SetDestination(new Vector3(-8.5f, 1f, 18.5f));
-        
-        Debug.Log("ACABO DE DESCANSAR");
+        accion = "Voy a descansar";
     }
     private ReturnValues comprobarDescansar()
     {
@@ -340,7 +337,6 @@ public class SkaaBehaviour : MonoBehaviour
         }
         else
         {
-            Debug.Log("Voy de camino a descansar");
             return ReturnValues.Running;
         }
         
@@ -351,11 +347,11 @@ public class SkaaBehaviour : MonoBehaviour
         //Programar la acción de dormir
         //Futuramente se cambiará al US
         agent.SetDestination(new Vector3(15.5f, 1f, -18.5f));
-        Debug.Log("Durmiendo");
+        accion = "Durmiendo";
     }
     private ReturnValues comprobarDormir()
     {
-        Debug.Log("comprobacion de dormir");
+        //Debug.Log("comprobacion de dormir");
         if (this.transform.position.x == 15.5f && this.transform.position.z == -18.5f && simManager.ciclo == SimulationManager.cicloDNA.DIA)
         {
             return ReturnValues.Succeed;
@@ -371,7 +367,7 @@ public class SkaaBehaviour : MonoBehaviour
     {
         agent.SetDestination(new Vector3(-19.5f, 1f, 19.5f));
         cansancio += 20;
-        Debug.Log("Acabo de trabajar");
+        //Debug.Log("Acabo de trabajar");
     }
     private ReturnValues comprobarTrabajar()
     {
@@ -405,6 +401,7 @@ public class SkaaBehaviour : MonoBehaviour
     }
     private void actIrATrabajar()
     {
+        accion = "Voy a trabajar";
         agent.SetDestination(new Vector3(-19.5f, 1f, 19.5f));
     }
     private ReturnValues comprobarLlegada()
@@ -425,8 +422,8 @@ public class SkaaBehaviour : MonoBehaviour
     {
         if (recursos >=50)
         {
+            accion = "Voy al puesto de trabajo";
             agent.SetDestination(new Vector3(-19.5f, 1f, 19.5f));
-            //agent.SetDestination(navigation.goToFabrica());
             puestoTrabajo.Fire();
         }
         else
@@ -437,8 +434,6 @@ public class SkaaBehaviour : MonoBehaviour
     }
     private void usandoRecursosFSM()
     {
-        
-
         //navigation.comprobarPosFabrica(this.transform.position)
         if (this.transform.position.x == -19.5f || this.transform.position.z == 19.5f)
         {
@@ -454,7 +449,7 @@ public class SkaaBehaviour : MonoBehaviour
                 }
                 else
                 {
-                    Debug.Log("EStoy usando recursos");
+                    accion = "Usando recursos";
                     recursos -= Random.Range(3, 12);
                     cansancio += Random.Range(5, 10);
                 }
@@ -463,6 +458,7 @@ public class SkaaBehaviour : MonoBehaviour
     }
     private void irARecogerRecursosFSM()
     {
+        accion = "Voy a por recursos";
         agent.SetDestination(new Vector3(-3.5f, 1.0f, 21.0f));
         puestoRecogida.Fire();
     }
@@ -484,7 +480,7 @@ public class SkaaBehaviour : MonoBehaviour
                 {
                     recursos += Random.Range(5, 20);
                     cansancio += Random.Range(2, 5);
-                    Debug.Log("Estoy recogiendo recursos");
+                    accion = "Estoy recogiendo recursos";
                 }
             } 
         }
