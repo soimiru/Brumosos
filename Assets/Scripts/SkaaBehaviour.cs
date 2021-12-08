@@ -32,6 +32,7 @@ public class SkaaBehaviour : MonoBehaviour
     Perception estoyCansado;
     Perception auxRecogiendo;
     Perception tiempoAuxiliar;
+    Perception seHaceNoche;
     
     #endregion percepcionesTrabajar
     private void OnGUI()
@@ -186,7 +187,8 @@ public class SkaaBehaviour : MonoBehaviour
         estoyCansado = adultFSM.CreatePerception<PushPerception>();
         auxRecogiendo = adultFSM.CreatePerception<PushPerception>();
         timerAux = adultFSM.CreatePerception<TimerPerception>(0.5f);
-        
+        seHaceNoche = adultFSM.CreatePerception<PushPerception>();
+
 
         //Estados
         State irAPorRecursos = adultFSM.CreateState("Ir a por Recursos", irARecogerRecursosFSM);
@@ -209,8 +211,10 @@ public class SkaaBehaviour : MonoBehaviour
         //adultFSM.CreateTransition("Timer Aux 4", irAPorRecursos, timerAux, irAPorRecursos);
 
         trabajarSubFsm = behaviourTree.CreateSubBehaviour("Sub FSM Trabajar", adultFSM, irAUsarRecursos);
-        adultFSM.CreateExitTransition("Vuelta a BT", usandoRecursos, estoyCansado, ReturnValues.Succeed);
-        adultFSM.CreateExitTransition("Vuelta a BT 2", recogiendoRecursos, estoyCansado, ReturnValues.Succeed);
+        adultFSM.CreateExitTransition("Vuelta a BT por cansancio", usandoRecursos, estoyCansado, ReturnValues.Succeed);
+        adultFSM.CreateExitTransition("Vuelta a BT por cansancio 2", recogiendoRecursos, estoyCansado, ReturnValues.Succeed);
+        adultFSM.CreateExitTransition("Vuelta a BT por noche", usandoRecursos, seHaceNoche, ReturnValues.Succeed);
+        adultFSM.CreateExitTransition("Vuelta a BT por noche 2", recogiendoRecursos, seHaceNoche, ReturnValues.Succeed);
     }
 
     void FSMChild()
@@ -243,7 +247,7 @@ public class SkaaBehaviour : MonoBehaviour
     }
     void nacerAction()
     {
-        Debug.Log("I WOULD LIKE TO SEE THE BABY");
+        //Debug.Log("I WOULD LIKE TO SEE THE BABY");
     }
     void crecerAction()
     {
@@ -260,7 +264,7 @@ public class SkaaBehaviour : MonoBehaviour
     }
     private ReturnValues comprobarSalud()
     {
-        Debug.Log("Compruebo Salud");
+        //Debug.Log("Compruebo Salud");
         if (salud > 0 )
         {
             //Debug.Log("Salud bien");
@@ -437,6 +441,10 @@ public class SkaaBehaviour : MonoBehaviour
         //navigation.comprobarPosFabrica(this.transform.position)
         if (this.transform.position.x == -19.5f || this.transform.position.z == 19.5f)
         {
+            if (simManager.ciclo == SimulationManager.cicloDNA.NOCHE)
+            {
+                seHaceNoche.Fire();
+            }
             if (cansancio >= 100)
             {
                 estoyCansado.Fire();
@@ -466,6 +474,10 @@ public class SkaaBehaviour : MonoBehaviour
     {
         if (this.transform.position.x >= -4.0f && this.transform.position.x <= -3.0f && this.transform.position.z >= 20.0 && this.transform.position.z <= 22.0)
         {
+            if (simManager.ciclo == SimulationManager.cicloDNA.NOCHE)
+            {
+                seHaceNoche.Fire();
+            }
             if (cansancio >= 100)
             {
                 estoyCansado.Fire();

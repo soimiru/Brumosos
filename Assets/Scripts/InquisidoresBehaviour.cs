@@ -200,7 +200,7 @@ public class InquisidoresBehaviour : MonoBehaviour
     }
     private ReturnValues compMetales()
     {
-        Debug.Log(metales);
+        //Debug.Log(metales);
         if (metales >= 10)
         {
             return ReturnValues.Succeed;
