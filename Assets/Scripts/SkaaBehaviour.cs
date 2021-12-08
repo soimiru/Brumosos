@@ -11,6 +11,7 @@ public class SkaaBehaviour : MonoBehaviour
     StateMachineEngine adultFSM;
     LeafNode trabajarSubFsm;
     string UItxt = "";
+    [SerializeField] float timer;
 
     #region variables Ska
     int salud = 100;
@@ -28,12 +29,14 @@ public class SkaaBehaviour : MonoBehaviour
     Perception puestoRecogida;
     Perception timerAux;
     Perception estoyCansado;
+    Perception auxRecogiendo;
+    Perception tiempoAuxiliar;
     
     #endregion percepcionesTrabajar
     private void OnGUI()
     {
         //TEXTO A MOSTRAR
-        UItxt = "Cansancio: " + cansancio + "\nSalud: " + salud;
+        UItxt = "Cansancio: " + cansancio + "\nSalud: " + salud + "\nRecursos: " + recursos;
 
         //ESTILO DE LA CAJA DE TEXTO
         GUIStyle style = new GUIStyle();
@@ -80,6 +83,7 @@ public class SkaaBehaviour : MonoBehaviour
         else
         {
             behaviourTree.Update();
+            adultFSM.Update();
         }
         
         
@@ -102,7 +106,7 @@ public class SkaaBehaviour : MonoBehaviour
         LeafNode timeTrabajarLeafNode = behaviourTree.CreateLeafNode("TimerTrabajar", actTimer, comprobarTimer);
 
         TimerDecoratorNode timerNodeDescansar = behaviourTree.CreateTimerNode("TimerNodeDescansar", timeDescansarLeafNode, 5);
-        TimerDecoratorNode timerNodeTrabajar = behaviourTree.CreateTimerNode("TimerNodeTrabajar", timeTrabajarLeafNode, 5);
+        TimerDecoratorNode timerNodeTrabajar = behaviourTree.CreateTimerNode("TimerNodeTrabajar", timeTrabajarLeafNode, 2);
 
         //Nodo secuencia 1
         SequenceNode descansarSequenceNode = behaviourTree.CreateSequenceNode("DescansarSelectorNode", false);
@@ -113,7 +117,6 @@ public class SkaaBehaviour : MonoBehaviour
         //Nodo secuencia 1**
         SequenceNode trabajarYEsperarSequenceNode = behaviourTree.CreateSequenceNode("TrabajarYEsperarSequenceNode", false);
         trabajarYEsperarSequenceNode.AddChild(trabajarSubFsm);
-        trabajarYEsperarSequenceNode.AddChild(timerNodeTrabajar);
 
         //Nodo selector 1
         SelectorNode cansadoTrabajarSelectorNode = behaviourTree.CreateSelectorNode("CansadoTrabajarSequenceNode");
@@ -124,7 +127,6 @@ public class SkaaBehaviour : MonoBehaviour
         //Nodo secuencia 2
         SequenceNode comprobarDiaSequenceNode = behaviourTree.CreateSequenceNode("ComprobarDiaSequenceNode", false);
         comprobarDiaSequenceNode.AddChild(esDiaLeafNode);
-        comprobarDiaSequenceNode.AddChild(irATrabajar);
         comprobarDiaSequenceNode.AddChild(cansadoTrabajarSelectorNode);
 
         //Nodo secuencia 3
@@ -175,13 +177,15 @@ public class SkaaBehaviour : MonoBehaviour
     {
         //FSM de trabajar
         //Percepciones
+        tiempoAuxiliar = adultFSM.CreatePerception<TimerPerception>(1.0f);
         recursosRecogidos = adultFSM.CreatePerception<PushPerception>();
         recursosAgotados = adultFSM.CreatePerception<PushPerception>();
         puestoTrabajo = adultFSM.CreatePerception<PushPerception>();
         puestoRecogida = adultFSM.CreatePerception<PushPerception>();
         estoyCansado = adultFSM.CreatePerception<PushPerception>();
-        timerAux = adultFSM.CreatePerception<TimerPerception>(1);
-
+        auxRecogiendo = adultFSM.CreatePerception<PushPerception>();
+        timerAux = adultFSM.CreatePerception<TimerPerception>(0.5f);
+        
 
         //Estados
         State irAPorRecursos = adultFSM.CreateState("Ir a por Recursos", irARecogerRecursosFSM);
@@ -189,14 +193,17 @@ public class SkaaBehaviour : MonoBehaviour
         State irAUsarRecursos = adultFSM.CreateEntryState("Ir a usar Recursos", irAUsarRecursosFSM);
         State usandoRecursos = adultFSM.CreateState("Usando Recursos", usandoRecursosFSM);
 
+        State auxRecogerRecursos = adultFSM.CreateState("Aux Recoger Recursos", auxRecogerRecursosFSM);
+
         //Transiciones
         adultFSM.CreateTransition("Recursos recogidos", recogiendoRecursos, recursosRecogidos, irAUsarRecursos);
         adultFSM.CreateTransition("Recursos gastados", usandoRecursos, recursosAgotados, irAPorRecursos);
         adultFSM.CreateTransition("Puesto recogida", irAPorRecursos, puestoRecogida, recogiendoRecursos);
         adultFSM.CreateTransition("Puesto trabajo", irAUsarRecursos, puestoTrabajo, usandoRecursos);
+        adultFSM.CreateTransition("De ir a usar a ir a por recursos", irAUsarRecursos, recursosAgotados, irAPorRecursos);
 
-        //adultFSM.CreateTransition("Timer Aux 1", irAUsarRecursos, timerAux, irAUsarRecursos);
-        adultFSM.CreateTransition("Timer Aux 2", recogiendoRecursos, timerAux, recogiendoRecursos);
+        adultFSM.CreateTransition("Timer Aux 1", recogiendoRecursos, auxRecogiendo, auxRecogerRecursos);
+        adultFSM.CreateTransition("Timer Aux 2", auxRecogerRecursos, tiempoAuxiliar, recogiendoRecursos);
         adultFSM.CreateTransition("Timer Aux 3", usandoRecursos, timerAux, usandoRecursos);
         //adultFSM.CreateTransition("Timer Aux 4", irAPorRecursos, timerAux, irAPorRecursos);
 
@@ -274,6 +281,7 @@ public class SkaaBehaviour : MonoBehaviour
     {
         if (simManager.ciclo == SimulationManager.cicloDNA.DIA)
         {
+            Debug.Log("Es de dia");
             return ReturnValues.Succeed;
         }
         else
@@ -320,11 +328,7 @@ public class SkaaBehaviour : MonoBehaviour
     {
         //Programar la acción de descansar
         agent.SetDestination(new Vector3(-8.5f, 1f, 18.5f));
-        cansancio -= 30;
-        if (cansancio > 0)
-        {
-            cansancio = 0;
-        }
+        
         Debug.Log("ACABO DE DESCANSAR");
     }
     private ReturnValues comprobarDescansar()
@@ -335,7 +339,7 @@ public class SkaaBehaviour : MonoBehaviour
         }
         else
         {
-           // Debug.Log("Voy de camino a descansar");
+            Debug.Log("Voy de camino a descansar");
             return ReturnValues.Running;
         }
         
@@ -391,7 +395,8 @@ public class SkaaBehaviour : MonoBehaviour
     }
     private void actTimer()
     {
-        Debug.Log("Timer descansar");
+        cansancio -= 0;
+        
     }
     private ReturnValues comprobarTimer()
     {
@@ -417,12 +422,24 @@ public class SkaaBehaviour : MonoBehaviour
     #region FSM Adulto
     private void irAUsarRecursosFSM()
     {
-        agent.SetDestination(navigation.goToFabrica());
-        puestoTrabajo.Fire();
+        if (recursos >=50)
+        {
+            agent.SetDestination(new Vector3(-19.5f, 1f, 19.5f));
+            //agent.SetDestination(navigation.goToFabrica());
+            puestoTrabajo.Fire();
+        }
+        else
+        {
+            recursosAgotados.Fire();
+        }
+        
     }
     private void usandoRecursosFSM()
     {
-        if (navigation.comprobarPosFabrica(this.transform.position))
+        
+
+        //navigation.comprobarPosFabrica(this.transform.position)
+        if (this.transform.position.x == -19.5f || this.transform.position.z == 19.5f)
         {
             if (cansancio >= 100)
             {
@@ -436,9 +453,9 @@ public class SkaaBehaviour : MonoBehaviour
                 }
                 else
                 {
-                    recursos -= 10;
-                    cansancio += 10;
-                    Debug.Log("Estoy trabajando");
+                    Debug.Log("EStoy usando recursos");
+                    recursos -= Random.Range(3, 12);
+                    cansancio += Random.Range(5, 10);
                 }
             }
         }
@@ -450,7 +467,7 @@ public class SkaaBehaviour : MonoBehaviour
     }
     private void recogerRecursosFSM()
     {
-        if (this.transform.position.x == -3.5f && this.transform.position.z == 21.0f)
+        if (this.transform.position.x >= -4.0f && this.transform.position.x <= -3.0f && this.transform.position.z >= 20.0 && this.transform.position.z <= 22.0)
         {
             if (cansancio >= 100)
             {
@@ -464,14 +481,19 @@ public class SkaaBehaviour : MonoBehaviour
                 }
                 else
                 {
-                    recursos += 20;
-                    cansancio += 5;
+                    recursos += Random.Range(5, 20);
+                    cansancio += Random.Range(2, 5);
                     Debug.Log("Estoy recogiendo recursos");
                 }
-            }
+            } 
         }
+        auxRecogiendo.Fire();
     }
     
+    private void auxRecogerRecursosFSM()
+    {
+        
+    }
     
 
 
