@@ -120,7 +120,7 @@ public class InquisidoresBehaviour : MonoBehaviour
         metalesBajos = stateMachine.CreatePerception<PushPerception>();
         patrullaCompleta = stateMachine.CreatePerception<PushPerception>();
         timerAux = stateMachine.CreatePerception<TimerPerception>(0.5f);
-        timerCaza = stateMachine.CreatePerception<TimerPerception>(0.5f);
+        timerCaza = stateMachine.CreatePerception<TimerPerception>(0.25f);
         golpearAuxP = stateMachine.CreatePerception<PushPerception>();
 
 
@@ -142,7 +142,7 @@ public class InquisidoresBehaviour : MonoBehaviour
         stateMachine.CreateTransition("Ska Golpeado aux", golpearAux, golpearAuxP, patrullar);
         stateMachine.CreateTransition("Ska Golpeado aux2", golpearAux, timerAux, golpearAux);
         stateMachine.CreateTransition("Repatrullar", patrullar, patrullaCompleta, aux);
-        stateMachine.CreateTransition("Timer Aux", aux, timerAux, patrullar);
+        stateMachine.CreateTransition("Timer Aux", aux, timerCaza, patrullar);
 
 
         stateMachine.CreateTransition("Enemigo Detectado", patrullar, enemigoDetectado, cazar);
