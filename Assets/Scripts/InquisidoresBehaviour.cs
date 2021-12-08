@@ -10,6 +10,7 @@ public class InquisidoresBehaviour : MonoBehaviour
     private BehaviourTreeEngine behaviourTree;
     private StateMachineEngine stateMachine;
     private LeafNode subFSM;
+    string accion = "";
     string UItxt = "";
 
     #region variables Inquisidores
@@ -63,7 +64,7 @@ public class InquisidoresBehaviour : MonoBehaviour
     private void OnGUI()
     {
         //TEXTO A MOSTRAR
-        UItxt = "Salud: " + salud + "\nMetales: " + metales;
+        UItxt = "Salud: " + salud + "\nMetales: " + metales + "\n" + accion;
 
         //ESTILO DE LA CAJA DE TEXTO
         GUIStyle style = new GUIStyle();

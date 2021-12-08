@@ -10,6 +10,7 @@ public class SkaaBehaviour : MonoBehaviour
     StateMachineEngine childFSM;
     StateMachineEngine adultFSM;
     LeafNode trabajarSubFsm;
+    string accion = "";
     string UItxt = "";
     [SerializeField] float timer;
 
@@ -36,7 +37,7 @@ public class SkaaBehaviour : MonoBehaviour
     private void OnGUI()
     {
         //TEXTO A MOSTRAR
-        UItxt = "Cansancio: " + cansancio + "\nSalud: " + salud + "\nRecursos: " + recursos;
+        UItxt = "Cansancio: " + cansancio + "\nSalud: " + salud + "\nRecursos: " + recursos + "\n" + accion;
 
         //ESTILO DE LA CAJA DE TEXTO
         GUIStyle style = new GUIStyle();

@@ -2955,6 +2955,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   agent: {fileID: 452694734}
   navigation: {fileID: 0}
+  timer: 0
 --- !u!195 &452694734
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -4537,6 +4538,7 @@ GameObject:
   - component: {fileID: 724826527}
   - component: {fileID: 724826526}
   - component: {fileID: 724826525}
+  - component: {fileID: 724826531}
   m_Layer: 0
   m_Name: NOBLE
   m_TagString: Entity
@@ -4656,6 +4658,19 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &724826531
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 724826524}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 1.5
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &734109151
 GameObject:
   m_ObjectHideFlags: 0
