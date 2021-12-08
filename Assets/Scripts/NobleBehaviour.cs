@@ -1,13 +1,18 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
 public class NobleBehaviour : MonoBehaviour
 {
     private int diaNacimiento;
-    int cansancio = 0;
+    float cansancio = 0;
     int salud = 100;
+    int ebriedad = 0;
+    float ganasReproducirse = 1;
+    string accion = "";
     string UItxt = "";
+
 
     private enum estados { ESTUDIAR, DORMIR };
     private bool adulto = false;
@@ -19,13 +24,29 @@ public class NobleBehaviour : MonoBehaviour
 
     StateMachineEngine childFSM = new StateMachineEngine();
     BehaviourTreeEngine adultBT = new BehaviourTreeEngine();
+    LeafNode fiestaNode;
+    UtilitySystemEngine partyUS = new UtilitySystemEngine(BehaviourEngine.IsASubmachine);    //true porque es submáquina
+    StateMachineEngine partyFSM = new StateMachineEngine(BehaviourEngine.IsASubmachine);
+    State irALaFiestaState;
+    Perception heLlegadoALaFiesta;
+    Perception ebriedadBaja;
+    Perception ebriedadMedia;
+    Perception cansancioAlto;
+    Perception nobleCerca;
+    Perception esDeDia;
+    Perception timer10;
+    Perception timer10b;
+    Perception timer15;
+    Perception timer20;
+    Perception aux;
 
-    
+
+
 
     private void OnGUI()
     {
         //TEXTO A MOSTRAR
-        UItxt = "Cansancio: " + cansancio + "\nSalud: " + salud;
+        UItxt = "Cansancio: " + cansancio + "\nSalud: " + salud+ "\nEbriedad: " + ebriedad+ "\n" + accion;
 
         //ESTILO DE LA CAJA DE TEXTO
         GUIStyle style = new GUIStyle();
@@ -80,8 +101,11 @@ public class NobleBehaviour : MonoBehaviour
                 crecerAction();
             }
         }
-        if (adulto) { 
+        if (adulto) {
             //BTAdult();
+
+            //partyUS.Update();
+            partyFSM.Update();
             adultBT.Update();
         }
         
@@ -100,6 +124,60 @@ public class NobleBehaviour : MonoBehaviour
         }
     }
 
+    int getGanasReproducirse() {
+        if (ganasReproducirse > 0.8)
+        {
+            return 1;
+        }
+        else {
+            return 0;
+        }
+    }
+
+    void createUSParty(){
+
+        //EBRIEDAD
+        Factor ebriedadVariables = new LeafVariable(()=> ebriedad, 0, 50); 
+        Factor ebriedadExp = new ExpCurve(ebriedadVariables, 0.5f); //CURVA EXPONENCIAL
+        partyUS.CreateUtilityAction("beber", beberAction, ebriedadExp);
+
+
+        //CANSANCIO^+EBRIEDAD^ = IRSE
+        Factor cansancioVariables = new LeafVariable(() => cansancio, 0, 100);
+        Factor cansancioExp = new ExpCurve(cansancioVariables, -0.5f);  //CURVA EXPONENCIAL
+        List<Factor> cansancioEbriedadIRSE = new List<Factor>();    //FACTORES
+        cansancioEbriedadIRSE.Add(ebriedadExp);
+        cansancioEbriedadIRSE.Add(cansancioExp);
+        List<float> pesosCEI = new List<float>();   //PESOS
+        pesosCEI.Add(0.3f);
+        pesosCEI.Add(0.7f);
+        Factor cansEbrIRSESum = new WeightedSumFusion(cansancioEbriedadIRSE, pesosCEI); //FUSION PONDERADA
+        partyUS.CreateUtilityAction("irse", irseAction, cansEbrIRSESum);    //ACCIÓN
+
+
+        //CANSANCIOv+EBRIEDAD^ = BAILAR
+        //Nos sirven las variables de arriba?
+        List<float> pesosCEB = new List<float>();   //PESOS
+        pesosCEB.Add(0.8f);
+        pesosCEB.Add(0.2f);
+        Factor cansEbrBAILARSum = new WeightedSumFusion(cansancioEbriedadIRSE, pesosCEB);
+        partyUS.CreateUtilityAction("bailar", bailarAction, cansEbrBAILARSum);
+
+
+        //EBRIEDAD^+GANASREPRODUCIRSE^ = REPRODUCIRSE
+        Factor reproducirseVariables = new LeafVariable(() => getGanasReproducirse(), 0, 1);
+        Factor reproLinear = new LinearCurve(reproducirseVariables);
+        List<Factor> reproEbriedadREP = new List<Factor>(); //FACTORES
+        reproEbriedadREP.Add(reproLinear);
+        reproEbriedadREP.Add(ebriedadExp);
+        List<float> pesosRepro = new List<float>(); //PESOS
+        pesosRepro.Add(0.9f);
+        pesosRepro.Add(0.1f);
+        Factor reproSum = new WeightedSumFusion(reproEbriedadREP, pesosRepro);
+        partyUS.CreateUtilityAction("reproducirse", reproducirseAction, reproSum);  //ACCIÓN
+
+        
+    }
 
     void createBTAdult() {
         
@@ -136,7 +214,7 @@ public class NobleBehaviour : MonoBehaviour
         LeafNode estoyCansadoNode;
         LeafNode dormirNode;
         LeafNode hayAlgunaFiestaNode;
-        LeafNode fiestaNode;
+        //fiestaNode arriba para poder usarlo en el SU
         LeafNode merodearNode;
         
 
@@ -144,7 +222,7 @@ public class NobleBehaviour : MonoBehaviour
         estoyCansadoNode = adultBT.CreateLeafNode("estoyCansado", actionCansado, comprobarCansancio);
         dormirNode = adultBT.CreateLeafNode("dormir", actionDormir, resultadoDormir);
         hayAlgunaFiestaNode = adultBT.CreateLeafNode("hayAlgunaFiesta", actionFiesta, comprobarFiesta);
-        fiestaNode = adultBT.CreateLeafNode("fiesta", fiestaSU, resultadoFiesta);
+        //fiestaNode = adultBT.CreateLeafNode("fiesta", fiestaSU, resultadoFiesta);
         merodearNode = adultBT.CreateLeafNode("merodear", merodearFSM, resultadoMerodear);
 
         cansancioDormirSequence = adultBT.CreateSequenceNode("cansancioDormir", false);
@@ -153,7 +231,14 @@ public class NobleBehaviour : MonoBehaviour
 
         fiestaSequence = adultBT.CreateSequenceNode("fiestaSequence", false);
         fiestaSequence.AddChild(hayAlgunaFiestaNode);
+        //fiestaNode = adultBT.CreateSubBehaviour("FiestaUS", partyFSM, irALaFiestaState);   //TRANSICION?
         fiestaSequence.AddChild(fiestaNode);
+        
+
+
+        //BehaviourTreeStatusPerception perceptionUSBT = partyUS.CreatePerception<BehaviourTreeStatusPerception>(adultBT, ReturnValues.Succeed);
+        //adultBT.CreateExitTransition("e", fiestaNode.StateNode, perceptionUSBT, entradaState);
+        
 
         nocheSelector = adultBT.CreateSelectorNode("nocheSelector");
         nocheSelector.AddChild(cansancioDormirSequence);
@@ -164,6 +249,7 @@ public class NobleBehaviour : MonoBehaviour
         nocheSequence = adultBT.CreateSequenceNode("nocheSequence", false);
         nocheSequence.AddChild(esDeNocheNode);
         nocheSequence.AddChild(nocheSelector);
+
 
         //BASE
         LeafNode tengoSaludNode;
@@ -195,29 +281,69 @@ public class NobleBehaviour : MonoBehaviour
 
     }
 
+    void createPartyFSM() {
+        //ESTADOS
+        irALaFiestaState = partyFSM.CreateEntryState("IrALaFiesta", irALaFiesta);
+        State neutralFiestaState = partyFSM.CreateState("Fiesta", estarEnLaFiesta);  //Estado neutral donde se comprueban las cosas?
+        State beberState = partyFSM.CreateState("Beber", beberAction);
+        State bailarState = partyFSM.CreateState("Bailar", bailarAction);
+        State reproducirseState = partyFSM.CreateState("Reproducirse", reproducirseAction);
+        State irseState = partyFSM.CreateState("Irse", irseAction);
 
+        //PERCEPCIONES
+        heLlegadoALaFiesta = partyFSM.CreatePerception<ValuePerception>(() => navPoints.comprobarPosMansionNoble(this.transform.position));
+        ebriedadBaja = partyFSM.CreatePerception<ValuePerception>(() => ebriedad <= 20);
+        ebriedadMedia = partyFSM.CreatePerception<ValuePerception>(() => ebriedad > 20 && cansancio < 50);
+        cansancioAlto = partyFSM.CreatePerception<ValuePerception>(() => cansancio > 80);
+        //heLlegadoALaFiesta = partyFSM.CreatePerception<PushPerception>();
+        //ebriedadBaja = partyFSM.CreatePerception<PushPerception>();
+        //ebriedadMedia = partyFSM.CreatePerception<PushPerception>();
+        //cansancioAlto = partyFSM.CreatePerception<PushPerception>();
+
+        aux = partyFSM.CreatePerception<PushPerception>();
+        esDeDia = partyFSM.CreatePerception<PushPerception>();
+        nobleCerca = partyFSM.CreatePerception<PushPerception>();
+        timer10 = partyFSM.CreatePerception<TimerPerception>(10);
+        timer15 = partyFSM.CreatePerception<TimerPerception>(15);
+        timer20 = partyFSM.CreatePerception<TimerPerception>(20);
+
+        //TRANSICIONES
+        partyFSM.CreateTransition("NeutroFiesta", irALaFiestaState, heLlegadoALaFiesta, neutralFiestaState);
+        partyFSM.CreateTransition("ABeber", neutralFiestaState, ebriedadBaja, beberState);
+        partyFSM.CreateTransition("VolverNeutroBeber", beberState, timer10, neutralFiestaState);
+        partyFSM.CreateTransition("ABailar", neutralFiestaState, ebriedadMedia, bailarState);
+        partyFSM.CreateTransition("VolverNeutroBailar", bailarState, timer15, neutralFiestaState);
+        partyFSM.CreateTransition("A Reproducirse", neutralFiestaState, nobleCerca, reproducirseState);
+        partyFSM.CreateTransition("VolverNeutroReprod", reproducirseState, timer20, neutralFiestaState);
+        partyFSM.CreateTransition("IrseDia", neutralFiestaState, esDeDia, irseState);
+        partyFSM.CreateTransition("IrseCansado", neutralFiestaState, cansancioAlto, irseState);
+
+        fiestaNode = adultBT.CreateSubBehaviour("FiestaUS", partyFSM, irALaFiestaState);
+        partyFSM.CreateExitTransition("Volver al BT", irseState, aux, ReturnValues.Succeed);
+    }
 
     #region METODOS CHILD
     void estudiarAction()
     {
-        //agent.SetDestination(new Vector3(12f, 1f, -20f));
         agent.SetDestination(new Vector3(-19.5f, 1f, 14f));
-        Debug.Log("ESTUDIANDO");
+        accion = "Estudiando";
     }
     void dormirAction()
     {
         agent.SetDestination(new Vector3(19f, 1f, 19f));
-        Debug.Log("DURMIENDO");
+        accion = "Durmiendo";
     }
     void nacerAction()
     {
-        Debug.Log("I WOULD LIKE TO SEE THE BABY");
+        
     }
     void crecerAction()
     {
         transform.localScale = new Vector3(1, 1, 1);
         adulto = true;
         //Debug.Log("He cresido");
+        createPartyFSM();
+        createUSParty();
         createBTAdult();
     }
     #endregion
@@ -256,11 +382,12 @@ public class NobleBehaviour : MonoBehaviour
     {
         if (navPoints.comprobarPosFabrica(this.transform.position))
         {
-            Debug.Log("He llegado a la fábrica");
+            accion = "He llegado a la fábrica";
             miPosicion = posiciones.FABRICA;
             return ReturnValues.Succeed;
         }
         else {
+            accion = "Estoy yendo a la fábrica";
             return ReturnValues.Running;
         }
     }
@@ -272,8 +399,8 @@ public class NobleBehaviour : MonoBehaviour
 
     //TRABAJAR
     void trabajar() {
-        Debug.Log("NOBLE TRABAJANDO");
-        cansancio += 2;
+        accion = "Trabajando";
+        cansancio += 0.1f;
     }
     private ReturnValues haTrabajado()
     {
@@ -283,7 +410,7 @@ public class NobleBehaviour : MonoBehaviour
     //DESCANSAR
     void descansar()
     {
-        Debug.Log("NOBLE DESCANSANDO");
+        accion = "Descansando de trabajar";
         cansancio -= 1;
     }
 
@@ -324,13 +451,15 @@ public class NobleBehaviour : MonoBehaviour
         //agent.SetDestination(new Vector3(19.5f, 1f, 13f));
         if (miPosicion != posiciones.MANSIONNOBLE)
         {
+            accion = "Yendo a dormir";
             agent.SetDestination(navPoints.goToMansionNoble());
             miPosicion = posiciones.MANSIONNOBLE;
         }
         else
         {
-            Debug.Log("NOBLE MIMIDO");
-            cansancio -= 1;
+            accion = "Durmiendo";
+            cansancio -= 20;
+            ebriedad = 0;
         }
 
     }
@@ -338,7 +467,7 @@ public class NobleBehaviour : MonoBehaviour
     //COMPROBAR FIESTA
     private ReturnValues comprobarFiesta()
     {
-        if (simManager.dias == 12 || simManager.dias == 15 || simManager.dias == 18)
+        if (simManager.ComprobarFiesta())
         {
             Debug.Log("HAY UNA FIESTA!!!");
             return ReturnValues.Succeed;
@@ -349,7 +478,9 @@ public class NobleBehaviour : MonoBehaviour
         }
 
     }
-    private void actionFiesta() { }
+    private void actionFiesta() {
+        
+    }
 
     //FIESTA
     private ReturnValues resultadoFiesta()
@@ -357,18 +488,7 @@ public class NobleBehaviour : MonoBehaviour
         return ReturnValues.Succeed;
     }
 
-    private void fiestaSU()
-    {
-        if (miPosicion != posiciones.MANSIONNOBLE)
-        {
-            agent.SetDestination(navPoints.goToMansionNoble());
-            miPosicion = posiciones.MANSIONNOBLE;
-        }
-        else
-        {
-            Debug.Log("NOBLE FIESTA");
-        }
-    }
+   
 
     //MERODEAR
     private ReturnValues resultadoMerodear()
@@ -380,16 +500,70 @@ public class NobleBehaviour : MonoBehaviour
     {
         if (miPosicion != posiciones.CALLE)
         {
+            accion = "Yendo a merodear";
             agent.SetDestination(new Vector3(-7f, 1f, -2f));
             miPosicion = posiciones.CALLE;
         }
         else {
-            Debug.Log("NOBLE MERODEANDO");
+            accion = "Merodeando";
         }
         
     }
 
 
+    #endregion
+
+    #region PARTY
+
+    void irALaFiesta() {
+        agent.SetDestination(navPoints.goToMansionNoble());
+        miPosicion = posiciones.MANSIONNOBLE;
+        accion = "Yendo a la fiesta";
+        if (navPoints.comprobarPosMansionNoble(this.transform.position) && miPosicion != posiciones.MANSIONNOBLE)
+        {
+            miPosicion = posiciones.MANSIONNOBLE;
+            heLlegadoALaFiesta.Fire();
+        }
+    }
+
+    void estarEnLaFiesta() {
+        accion = "De fiesta";
+        
+        //if (ebriedad <= 20) {
+        //    ebriedadBaja.Fire();
+        //}
+        //if (ebriedad > 20 && cansancio < 50) {
+        //    ebriedadMedia.Fire();
+        //}
+        //if (cansancio > 80) {
+        //    cansancioAlto.Fire();
+        //}
+        if (simManager.ciclo == SimulationManager.cicloDNA.DIA) {
+            esDeDia.Fire();
+        }
+        //timer10b.Fire();
+    }
+
+    void beberAction() {
+        ebriedad += 10;
+        accion = "Bebiendo";
+        //timer10.Fire();
+    }
+    void bailarAction() {
+        accion = "Bailando";
+        cansancio += 10;
+        ebriedad += 5;
+        //timer15.Fire();
+    }
+    void reproducirseAction() {
+        accion = "Reproduciendo";
+        //timer20.Fire();
+    }
+    void irseAction()
+    {
+        aux.Fire();
+        accion = "Me voy de la fiesta";
+    }
     #endregion
 
     #region METODOS GENERALES

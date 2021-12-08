@@ -41,7 +41,7 @@ public class SimulationManager : MonoBehaviour
 
         ActualizarReloj(tiempoAMostrarEnSegundos);
         if (tiempoAMostrarEnSegundos > 1440) {
-            dias++;
+            ++dias;
             ActualizarDias();
             tiempoAMostrarEnSegundos = 0;
         }
@@ -65,6 +65,19 @@ public class SimulationManager : MonoBehaviour
         }
 
         
+    }
+
+    public bool ComprobarFiesta() {
+        if (dias % 3 == 0 && tiempoAMostrarEnSegundos > 1080)
+        {
+            return true;
+        }
+        else if (dias-1 % 3 == 0 && tiempoAMostrarEnSegundos < 360) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     public void ActualizarReloj(float tiempoEnSegundos)
