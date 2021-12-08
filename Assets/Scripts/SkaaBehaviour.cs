@@ -216,7 +216,14 @@ public class SkaaBehaviour : MonoBehaviour
         adultFSM.CreateExitTransition("Vuelta a BT por noche", usandoRecursos, seHaceNoche, ReturnValues.Succeed);
         adultFSM.CreateExitTransition("Vuelta a BT por noche 2", recogiendoRecursos, seHaceNoche, ReturnValues.Succeed);
     }
-
+    
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.tag == "Inquisidor")
+        {
+            salud -= 10;
+        }
+    }
     void FSMChild()
     {
         switch (simManager.ciclo)
