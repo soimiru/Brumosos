@@ -33,7 +33,6 @@ public class SkaaBehaviour : MonoBehaviour
     Perception auxRecogiendo;
     Perception tiempoAuxiliar;
     Perception seHaceNoche;
-    
     #endregion percepcionesTrabajar
     private void OnGUI()
     {
