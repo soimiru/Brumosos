@@ -56,7 +56,7 @@ public class NobleBehaviour : MonoBehaviour
         style.fontSize = 30;
 
         //TAMAÑO Y POSICION
-        Rect rect = new Rect(0, 0, 300, 100);
+        Rect rect = new Rect(0, 0, 300, 200);
         Vector3 offset = new Vector3(0f, 0.5f, 0f); // height above the target position
         Vector3 point = Camera.main.WorldToScreenPoint(this.transform.position + offset);
         rect.x = point.x - 150;
