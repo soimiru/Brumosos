@@ -5,28 +5,28 @@ using UnityEngine.AI;
 
 public class NobleBehaviour : MonoBehaviour
 {
-    private int diaNacimiento;
-    float cansancio = 0;
+    [Header("Variables NOBLES")]
+    int diaNacimiento;
+    int cansancio = 0;
     int salud = 100;
     int ebriedad = 0;
     float ganasReproducirse = 1;
     string accion = "";
     string UItxt = "";
-    public bool fiesta = false;
-
-
-    private enum estados { ESTUDIAR, DORMIR };
-    private bool adulto = false;
-    private SimulationManager simManager;
+    bool fiesta = false;
+    bool adulto = false;
+    enum posiciones { FABRICA, MANSIONNOBLE, CALLE }
+    posiciones miPosicion;
+    
     public NavMeshAgent agent;
+    private SimulationManager simManager;
     private NavigationPoints navPoints;
-    public enum posiciones { FABRICA, MANSIONNOBLE, CALLE }
-    public posiciones miPosicion;
 
+    [Header("Behaviour Engines")]
     StateMachineEngine childFSM = new StateMachineEngine();
     BehaviourTreeEngine adultBT = new BehaviourTreeEngine();
     LeafNode fiestaNode;
-    UtilitySystemEngine partyUS = new UtilitySystemEngine(BehaviourEngine.IsASubmachine);    //true porque es submáquina
+    UtilitySystemEngine partyUS = new UtilitySystemEngine(BehaviourEngine.IsASubmachine);   
     StateMachineEngine partyFSM = new StateMachineEngine(BehaviourEngine.IsASubmachine);
     State irALaFiestaState;
     Perception heLlegadoALaFiesta;
@@ -36,13 +36,9 @@ public class NobleBehaviour : MonoBehaviour
     Perception nobleCerca;
     Perception esDeDia;
     Perception timer10;
-    Perception timer10b;
     Perception timer15;
     Perception timer20;
     Perception aux;
-
-
-
 
     private void OnGUI()
     {
@@ -59,13 +55,13 @@ public class NobleBehaviour : MonoBehaviour
 
         //TAMAÑO Y POSICION
         Rect rect = new Rect(0, 0, 330, 140);
-        Vector3 offset = new Vector3(0f, 0.5f, 0f); // height above the target position
+        Vector3 offset = new Vector3(0f, 0.5f, 0f); //Altura respecto al objetivo
         Vector3 point = Camera.main.WorldToScreenPoint(this.transform.position + offset);
         rect.x = point.x - 150;
-        rect.y = Screen.height - point.y - rect.height; // bottom left corner set to the 3D point
+        rect.y = Screen.height - point.y - rect.height; // Esquina inferior izquierda
 
         //MOSTRAR POR PANTALLA
-        GUI.Label(rect, UItxt, style); // display its name, or other string
+        GUI.Label(rect, UItxt, style);
     }
 
     private void Awake()
@@ -76,25 +72,11 @@ public class NobleBehaviour : MonoBehaviour
         diaNacimiento = simManager.dias;
     }
 
-    // Start is called before the first frame update
     void Start()
     {
-        //State nacerState = childFSM.CreateEntryState("Nacer", nacerAction);
-        State estudiarState = childFSM.CreateEntryState("Estudiar", estudiarAction);
-        State dormirState = childFSM.CreateState("Dormir", dormirAction);
-
-        //Percepciones
-        Perception nacimiento = childFSM.CreatePerception<TimerPerception>(1);
-        Perception hacerNoche = childFSM.CreatePerception<PushPerception>();
-        Perception hacerDia = childFSM.CreatePerception<PushPerception>();
-
-        //Transiciones
-        //childFSM.CreateTransition("AMimir", nacerState, nacimiento, dormirState);
-        childFSM.CreateTransition("Dormir", estudiarState, hacerNoche, dormirState);
-        childFSM.CreateTransition("Estudiar", dormirState, hacerDia, estudiarState);
+        createFSMChild();
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (!adulto) {
@@ -105,13 +87,26 @@ public class NobleBehaviour : MonoBehaviour
             }
         }
         if (adulto) {
-            //BTAdult();
-
-            //partyUS.Update();
             partyFSM.Update();
             adultBT.Update();
         }
         
+    }
+
+    #region FSM CHILD
+    void createFSMChild() {
+        //ESTADOS
+        State estudiarState = childFSM.CreateEntryState("Estudiar", estudiarAction);
+        State dormirState = childFSM.CreateState("Dormir", dormirAction);
+
+        //PERCEPCIONES
+        Perception nacimiento = childFSM.CreatePerception<TimerPerception>(1);
+        Perception hacerNoche = childFSM.CreatePerception<PushPerception>();
+        Perception hacerDia = childFSM.CreatePerception<PushPerception>();
+
+        //TRANSICIONES
+        childFSM.CreateTransition("Dormir", estudiarState, hacerNoche, dormirState);
+        childFSM.CreateTransition("Estudiar", dormirState, hacerDia, estudiarState);
     }
 
     void FSMChild()
@@ -127,6 +122,9 @@ public class NobleBehaviour : MonoBehaviour
         }
     }
 
+    #endregion
+
+    #region US FIESTA -no utilizado-
     int getGanasReproducirse() {
         if (ganasReproducirse > 0.8)
         {
@@ -144,7 +142,6 @@ public class NobleBehaviour : MonoBehaviour
         Factor ebriedadExp = new ExpCurve(ebriedadVariables, 0.5f); //CURVA EXPONENCIAL
         partyUS.CreateUtilityAction("beber", beberAction, ebriedadExp);
 
-
         //CANSANCIO^+EBRIEDAD^ = IRSE
         Factor cansancioVariables = new LeafVariable(() => cansancio, 0, 100);
         Factor cansancioExp = new ExpCurve(cansancioVariables, -0.5f);  //CURVA EXPONENCIAL
@@ -157,7 +154,6 @@ public class NobleBehaviour : MonoBehaviour
         Factor cansEbrIRSESum = new WeightedSumFusion(cansancioEbriedadIRSE, pesosCEI); //FUSION PONDERADA
         partyUS.CreateUtilityAction("irse", irseAction, cansEbrIRSESum);    //ACCIÓN
 
-
         //CANSANCIOv+EBRIEDAD^ = BAILAR
         //Nos sirven las variables de arriba?
         List<float> pesosCEB = new List<float>();   //PESOS
@@ -165,7 +161,6 @@ public class NobleBehaviour : MonoBehaviour
         pesosCEB.Add(0.2f);
         Factor cansEbrBAILARSum = new WeightedSumFusion(cansancioEbriedadIRSE, pesosCEB);
         partyUS.CreateUtilityAction("bailar", bailarAction, cansEbrBAILARSum);
-
 
         //EBRIEDAD^+GANASREPRODUCIRSE^ = REPRODUCIRSE
         Factor reproducirseVariables = new LeafVariable(() => getGanasReproducirse(), 0, 1);
@@ -178,12 +173,13 @@ public class NobleBehaviour : MonoBehaviour
         pesosRepro.Add(0.1f);
         Factor reproSum = new WeightedSumFusion(reproEbriedadREP, pesosRepro);
         partyUS.CreateUtilityAction("reproducirse", reproducirseAction, reproSum);  //ACCIÓN
-
-        
     }
+    #endregion
 
+    #region BT ADULTO
     void createBTAdult() {
-        
+
+        //DÍA
         SequenceNode diaSequence;
         SelectorNode descansoTrabajoSelector;
 
@@ -191,8 +187,7 @@ public class NobleBehaviour : MonoBehaviour
         LeafNode irALaFabricaNode;
         LeafNode trabajarNode;
         LeafNode descansarNode;
-      
-        //DÍA
+        
         esDeDiaNode = adultBT.CreateLeafNode("esDeDiaNode", actionDia, comprobarDia);
         irALaFabricaNode = adultBT.CreateLeafNode("irALaFabrica", actionIrFabrica, comprobarIrFabrica);
         trabajarNode = adultBT.CreateLeafNode("trabajarNode", trabajar, haTrabajado);
@@ -217,15 +212,12 @@ public class NobleBehaviour : MonoBehaviour
         LeafNode estoyCansadoNode;
         LeafNode dormirNode;
         LeafNode hayAlgunaFiestaNode;
-        //fiestaNode arriba para poder usarlo en el SU
         LeafNode merodearNode;
-        
 
         esDeNocheNode = adultBT.CreateLeafNode("esDeNocheNode", actionNoche, comprobarNoche);
         estoyCansadoNode = adultBT.CreateLeafNode("estoyCansado", actionCansado, comprobarCansancio);
         dormirNode = adultBT.CreateLeafNode("dormir", actionDormir, resultadoDormir);
         hayAlgunaFiestaNode = adultBT.CreateLeafNode("hayAlgunaFiesta", actionFiesta, comprobarFiesta);
-        //fiestaNode = adultBT.CreateLeafNode("fiesta", fiestaSU, resultadoFiesta);
         merodearNode = adultBT.CreateLeafNode("merodear", merodearFSM, resultadoMerodear);
 
         cansancioDormirSequence = adultBT.CreateSequenceNode("cansancioDormir", false);
@@ -234,25 +226,16 @@ public class NobleBehaviour : MonoBehaviour
 
         fiestaSequence = adultBT.CreateSequenceNode("fiestaSequence", false);
         fiestaSequence.AddChild(hayAlgunaFiestaNode);
-        //fiestaNode = adultBT.CreateSubBehaviour("FiestaUS", partyFSM, irALaFiestaState);   //TRANSICION?
         fiestaSequence.AddChild(fiestaNode);
-        
-
-
-        //BehaviourTreeStatusPerception perceptionUSBT = partyUS.CreatePerception<BehaviourTreeStatusPerception>(adultBT, ReturnValues.Succeed);
-        //adultBT.CreateExitTransition("e", fiestaNode.StateNode, perceptionUSBT, entradaState);
-        
 
         nocheSelector = adultBT.CreateSelectorNode("nocheSelector");
         nocheSelector.AddChild(cansancioDormirSequence);
         nocheSelector.AddChild(fiestaSequence);
         nocheSelector.AddChild(merodearNode);
-        
 
         nocheSequence = adultBT.CreateSequenceNode("nocheSequence", false);
         nocheSequence.AddChild(esDeNocheNode);
         nocheSequence.AddChild(nocheSelector);
-
 
         //BASE
         LeafNode tengoSaludNode;
@@ -262,7 +245,6 @@ public class NobleBehaviour : MonoBehaviour
         SequenceNode tengoSaludSequenceNode;
         SelectorNode baseSelectorNode;
         LoopDecoratorNode rootNode;
-        
 
         tengoSaludNode = adultBT.CreateLeafNode("tengoSaludNode", actionSalud, comprobarSalud);
         morirNode = adultBT.CreateLeafNode("morirNode", actionMorir, comprobarMorir);
@@ -283,7 +265,9 @@ public class NobleBehaviour : MonoBehaviour
         adultBT.SetRootNode(rootNode);
 
     }
+    #endregion
 
+    #region FSM FIESTA
     void createPartyFSM() {
         //ESTADOS
         irALaFiestaState = partyFSM.CreateEntryState("IrALaFiesta", irALaFiesta);
@@ -298,10 +282,6 @@ public class NobleBehaviour : MonoBehaviour
         ebriedadBaja = partyFSM.CreatePerception<ValuePerception>(() => ebriedad <= 20);
         ebriedadMedia = partyFSM.CreatePerception<ValuePerception>(() => ebriedad > 20 && cansancio < 50);
         cansancioAlto = partyFSM.CreatePerception<ValuePerception>(() => cansancio > 80);
-        //heLlegadoALaFiesta = partyFSM.CreatePerception<PushPerception>();
-        //ebriedadBaja = partyFSM.CreatePerception<PushPerception>();
-        //ebriedadMedia = partyFSM.CreatePerception<PushPerception>();
-        //cansancioAlto = partyFSM.CreatePerception<PushPerception>();
 
         aux = partyFSM.CreatePerception<PushPerception>();
         esDeDia = partyFSM.CreatePerception<PushPerception>();
@@ -327,6 +307,8 @@ public class NobleBehaviour : MonoBehaviour
         partyFSM.CreateExitTransition("Volver al BT", irseState, aux, ReturnValues.Succeed);
     }
 
+    #endregion
+
     #region METODOS CHILD
     void estudiarAction()
     {
@@ -346,7 +328,6 @@ public class NobleBehaviour : MonoBehaviour
     {
         transform.localScale = new Vector3(1, 1, 1);
         adulto = true;
-        //Debug.Log("He cresido");
         createPartyFSM();
         createUSParty();
         createBTAdult();
@@ -405,7 +386,7 @@ public class NobleBehaviour : MonoBehaviour
     //TRABAJAR
     void trabajar() {
         accion = "Trabajando";
-        cansancio += 0.1f;
+        cansancio += 1;
     }
     private ReturnValues haTrabajado()
     {
@@ -452,7 +433,6 @@ public class NobleBehaviour : MonoBehaviour
 
     private void actionDormir()
     {
-        //agent.SetDestination(new Vector3(19.5f, 1f, 13f));
         if (miPosicion != posiciones.MANSIONNOBLE)
         {
             accion = "Yendo a dormir";
@@ -491,8 +471,6 @@ public class NobleBehaviour : MonoBehaviour
         return ReturnValues.Succeed;
     }
 
-   
-
     //MERODEAR
     private ReturnValues resultadoMerodear()
     {
@@ -518,15 +496,6 @@ public class NobleBehaviour : MonoBehaviour
 
     #region PARTY
 
-    //private void OnCollisionEnter(Collision collision)
-    //{
-    //    Debug.Log("COLISION");
-    //    if (fiesta == true)
-    //    {
-    //        Debug.Log("PIUM PIUM");
-    //        nobleCerca.Fire();
-    //    }
-    //}
     private void OnCollisionStay(Collision collision)
     {
         if (fiesta == true && ganasReproducirse == 1)
@@ -550,20 +519,9 @@ public class NobleBehaviour : MonoBehaviour
     void estarEnLaFiesta() {
         fiesta = true;
         accion = "De fiesta";
-        
-        //if (ebriedad <= 20) {
-        //    ebriedadBaja.Fire();
-        //}
-        //if (ebriedad > 20 && cansancio < 50) {
-        //    ebriedadMedia.Fire();
-        //}
-        //if (cansancio > 80) {
-        //    cansancioAlto.Fire();
-        //}
         if (simManager.ciclo == SimulationManager.cicloDNA.DIA) {
             esDeDia.Fire();
         }
-        //timer10b.Fire();
     }
 
     void beberAction() {
@@ -572,23 +530,20 @@ public class NobleBehaviour : MonoBehaviour
         if (ebriedad >= 30) {
             ganasReproducirse = 1;
         }
-        //timer10.Fire();
     }
     void bailarAction() {
         accion = "Bailando";
-        cansancio += 10;
+        cansancio += 5;
         ebriedad += 5;
         if (ebriedad >= 30)
         {
             ganasReproducirse = 1;
         }
-        //timer15.Fire();
     }
     void reproducirseAction() {
         accion = "Reproduciendo";
         Instantiate(this.transform.gameObject);
         ganasReproducirse = 0;
-        //timer20.Fire();
     }
     void irseAction()
     {
@@ -604,11 +559,25 @@ public class NobleBehaviour : MonoBehaviour
         return ReturnValues.Succeed;
     }
 
-    private void actionMorir(){ }
+    private void actionMorir(){
+        //Destroy(this);
+    }
 
     private ReturnValues comprobarSalud()
     {
-        return ReturnValues.Succeed;
+        if ((diaNacimiento + 15) <= simManager.dias) {
+            salud = 0;
+        }
+        if (salud <= 0)
+        {
+            Debug.Log("MY TIME HAS COME");
+            Destroy(this);
+            return ReturnValues.Failed;
+        }
+        else {
+            return ReturnValues.Succeed;
+        }
+        
     }
 
     private void actionSalud() { }
