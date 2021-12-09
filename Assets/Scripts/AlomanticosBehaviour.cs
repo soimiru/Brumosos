@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class AlomantesMAL : MonoBehaviour
+public class AlomanticosBehaviour : MonoBehaviour
 {
     public NavMeshAgent agent;
     private SimulationManager simManager;
