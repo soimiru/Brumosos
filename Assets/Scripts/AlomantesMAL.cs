@@ -25,12 +25,11 @@ public class AlomantesMAL : MonoBehaviour
     private bool patrullando = false;
     private bool cazando = false;
     public float attackRadius = 30.0f;
-    public Transform[] destinations;
     private int currentPoint = 0;
-    [SerializeField] float timer;
-    [SerializeField] float maxTime;
+    private int escondite = 0;
     [SerializeField] bool inRange;
     public Vector3[] destinos;
+    public Vector3[] escondrijos;
     private bool first = true;
     #endregion variables Patrulla
 
@@ -54,7 +53,9 @@ public class AlomantesMAL : MonoBehaviour
     private Perception enemigosCercaAlo;
     private Perception enemigoAlcanzadoAlo;
     private Perception enemigoLejosAlo;
+    private Perception enemigoDerrotado;
     private Perception timerAuxAlo;
+    private Perception timerPatrol;
     private Perception esNocheAlo;
 
     #endregion percepciones
@@ -118,9 +119,10 @@ public class AlomantesMAL : MonoBehaviour
         enemigosCercaAlo = stateMachine.CreatePerception<PushPerception>();
         enemigoAlcanzadoAlo = stateMachine.CreatePerception<PushPerception>();
         enemigoLejosAlo = stateMachine.CreatePerception<PushPerception>();
+        enemigoDerrotado = stateMachine.CreatePerception<PushPerception>();
         esNocheAlo = stateMachine.CreatePerception<PushPerception>();
         timerAuxAlo = stateMachine.CreatePerception<TimerPerception>(0.5f);
-       // timerCaza = stateMachine.CreatePerception<TimerPerception>(0.25f);
+        timerPatrol = stateMachine.CreatePerception<TimerPerception>(0.25f);
         //golpearAuxP = stateMachine.CreatePerception<PushPerception>();
 
 
@@ -136,7 +138,7 @@ public class AlomantesMAL : MonoBehaviour
 
 
         //Transiciones
-        stateMachine.CreateTransition("Repatrullar", patrullar, timerAuxAlo, patrullar);
+        stateMachine.CreateTransition("Repatrullar", patrullar, timerPatrol, patrullar);
 
 
         stateMachine.CreateTransition("Enemigo Detectado", patrullar, enemigosCercaAlo, cazar);
@@ -146,6 +148,7 @@ public class AlomantesMAL : MonoBehaviour
         stateMachine.CreateTransition("Luchando", luchar, timerAuxAlo, luchar);
         stateMachine.CreateTransition("Morir", luchar, saludCeroAlo, morir);
         stateMachine.CreateTransition("Intento Huir", luchar, probHuirAlo, huir);
+        stateMachine.CreateTransition("Enemigo Vencido", luchar, enemigoDerrotado, patrullar);
         stateMachine.CreateTransition("Huir", huir, timerAuxAlo, huir);
         stateMachine.CreateTransition("Huida exitosa", huir, enemigoLejosAlo, irAHogar);
         stateMachine.CreateTransition("Huida fallida", huir, enemigoAlcanzadoAlo, luchar);
@@ -239,6 +242,7 @@ public class AlomantesMAL : MonoBehaviour
     #region Metodos FSM
     private void fsmPatrullar()
     {
+        agent.speed = 3.5F;
         patrullando = true;
         accion = "Patrullando";
         if (simManager.ciclo == SimulationManager.cicloDNA.NOCHE)
@@ -280,14 +284,38 @@ public class AlomantesMAL : MonoBehaviour
         patrullando = false;
         accion = "Luchando";
         //Lucho
+        if (target == null)
+        {
+            first = true;
+            enemigoDerrotado.Fire();
+        }
+        if (salud < 20)
+        {
+            int huida = Random.Range(1, 6);
+            if (huida >= 1)
+            {
+                escondite = Random.Range(0, 3);
+                Vector3 newPos = escondrijos[escondite];
+                agent.SetDestination(newPos);
+                probHuirAlo.Fire();
+            }
+        }
         if (metales >= 5)
         {
-            metales -= 5;
+            metales -= Random.Range(2, 5);
             salud -= Random.Range(2, 5);
+            if (metales <= 0)
+            {
+                metales = 0;
+            }
         }
         else
         {
             salud -= Random.Range(5, 8);
+            if (salud <=0)
+            {
+                salud = 0;
+            }
         }
         if (salud <= 0)
         {
@@ -298,16 +326,32 @@ public class AlomantesMAL : MonoBehaviour
     private void fsmMorir()
     {
         //Muero
+        Destroy(this.gameObject);
     }
     private void fsmHuir()
     {
         patrullando = false;
         accion = "Huyendo";
+        agent.speed = 5;
+        if (this.transform.position.x >= agent.destination.x -0.5f && this.transform.position.x <= agent.destination.x + 0.5f && this.transform.position.z >= agent.destination.z - 0.5f && this.transform.position.z <= agent.destination.z + 0.5f)
+        {
+            enemigoLejosAlo.Fire();
+        }
+        
     }
     private void fsmIrAHogar()
     {
         patrullando = false;
-        accion = "De camino a casa";
+        accion = "Estoy a salvo";
+        salud += 10;
+        metales += 10;
+        if (salud >= 100 && metales>= 100)
+        {
+            first = true;
+            salud = 100;
+            metales = 100;
+            saludCompletaAlo.Fire();
+        }
     }
     private void fsmRecargarMetales()
     {
@@ -321,14 +365,7 @@ public class AlomantesMAL : MonoBehaviour
     }
     private void updateCurrentPoint()
     {
-        if (currentPoint == destinos.Length - 1)
-        {
-            currentPoint = 0;
-        }
-        else
-        {
-            currentPoint++;
-        }
+        currentPoint = Random.Range(0, destinos.Length - 1);
     }
 
 

@@ -140,7 +140,9 @@ public class InquisidoresBehaviour : MonoBehaviour
         stateMachine.CreateTransition("Ska Detectado en aux", aux, skaDescansandoDetectado, golpear);
         stateMachine.CreateTransition("Ska Golpeado", golpear, skaGolpeado, golpearAux);
         stateMachine.CreateTransition("De camino a golpear", golpear, timerAux, golpear);
+        stateMachine.CreateTransition("Enemigo detectado de camino a Ska", golpear, enemigoDetectado, cazar);
         stateMachine.CreateTransition("De vuelta a patrullar", golpearAux, golpearAuxP, patrullar);
+        stateMachine.CreateTransition("De vuelta a patrullar me encontré un Enemigo", golpearAux, enemigoDetectado, cazar);
         stateMachine.CreateTransition("Comprobación si he vuelto a patrullar", golpearAux, timerAux, golpearAux);
         stateMachine.CreateTransition("Repatrullar", patrullar, patrullaCompleta, aux);
         stateMachine.CreateTransition("Timer Aux", aux, timerCaza, patrullar);
@@ -154,7 +156,7 @@ public class InquisidoresBehaviour : MonoBehaviour
         //stateMachine.CreateTransition("CazandoAux", cazarAux, timerCaza, cazar);
 
         stateMachine.CreateTransition("Enemigo Alcanzado", cazar, enemigoAlcanzado, luchar);
-        stateMachine.CreateTransition("Enemigo Fuera Rango", luchar, enemigoFueraDeRango, cazar);
+        stateMachine.CreateTransition("Enemigo Fuera Rango", luchar, enemigoFueraDeRango, patrullar);
         stateMachine.CreateTransition("Luchando", luchar, timerAux, luchar);
         stateMachine.CreateTransition("Enemigo Derrotado", luchar, enemigoDerrotado, patrullar);
         stateMachine.CreateTransition("Lucha Perdida", luchar, luchaPerdida, morir);
@@ -222,7 +224,7 @@ public class InquisidoresBehaviour : MonoBehaviour
     }
     private ReturnValues comprobarMinisterio()
     {
-        if (this.transform.position.x == -21.5 && this.transform.position.z == -13)
+        if (this.transform.position.x >= -22.0 && this.transform.position.x >= -21.0 && this.transform.position.z >= -13.5 && this.transform.position.z <= -12.5)
         {
             return ReturnValues.Succeed;
         }
@@ -255,7 +257,7 @@ public class InquisidoresBehaviour : MonoBehaviour
         patrullando = true;
         cazando = false;
 
-        if (!inRange && this.transform.position.x == agent.destination.x && this.transform.position.z == agent.destination.z || first == true)
+        if (!inRange && this.transform.position.x >= agent.destination.x - 0.5f && this.transform.position.x <= agent.destination.x + 0.5f && this.transform.position.z >= agent.destination.z - 0.5f && this.transform.position.z <= agent.destination.z + 0.5f || first == true)
         {
             first = false;
             updateCurrentPoint();
@@ -310,14 +312,27 @@ public class InquisidoresBehaviour : MonoBehaviour
         cazando = false;
         accion = "Luchando";
         //Lucho
+        if (targetAlomantico == null)
+        {
+            first = true;
+            enemigoDerrotado.Fire();
+        }
         if (metales >= 5)
         {
-            metales -= 5;
+            metales -= Random.Range(2, 5);
             salud -= Random.Range(2, 5);
+            if (metales <= 0)
+            {
+                metales = 0;
+            }
         }
         else
         {
             salud -= Random.Range(5, 8);
+            if (salud <= 0)
+            {
+                salud = 0;
+            }
         }
         if (salud <= 0)
         {
@@ -326,7 +341,7 @@ public class InquisidoresBehaviour : MonoBehaviour
     }
     private void fsmMorir()
     {
-        //Muero
+        Destroy(this.gameObject);
     }
     private void updateCurrentPoint()
     {
@@ -369,11 +384,12 @@ public class InquisidoresBehaviour : MonoBehaviour
                 targetSka = other.transform;
                 skaDescansandoDetectado.Fire();
             }
-            else if(other.tag == "Alomántico") 
-            {
-                targetAlomantico = other.transform;
-                enemigoDetectado.Fire();
-            }
+            
+        }
+        if (other.tag == "Alomántico")
+        {
+            targetAlomantico = other.transform;
+            enemigoDetectado.Fire();
         }
     }
 
@@ -388,6 +404,14 @@ public class InquisidoresBehaviour : MonoBehaviour
             else if (other.tag == "Alomántico")
             {
                 enemigoPerdido.Fire();
+            }
+        }
+        if (cazando == false && patrullando == false)
+        {
+            if (other.tag == "Alomántico")
+            {
+                first = true;
+                enemigoFueraDeRango.Fire();
             }
         }
     }

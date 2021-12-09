@@ -409,6 +409,7 @@ public class SkaaBehaviour : MonoBehaviour
     private void actMorir()
     {
         //La unidad se muere
+        Destroy(this.gameObject);
     }
     private ReturnValues comprobarMorir()
     {
@@ -418,7 +419,6 @@ public class SkaaBehaviour : MonoBehaviour
     private void actTimer()
     {
         cansancio -= 0;
-        
     }
     private ReturnValues comprobarTimer()
     {

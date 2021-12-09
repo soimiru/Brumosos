@@ -10571,9 +10571,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   agent: {fileID: 1755492964}
   attackRadius: 30
-  destinations: []
-  timer: 0
-  maxTime: 0
   inRange: 0
   destinos:
   - {x: 11.5, y: 1, z: 7.5}
@@ -10582,6 +10579,14 @@ MonoBehaviour:
   - {x: -10, y: 1, z: -11}
   - {x: 22.5, y: 1, z: -22.5}
   - {x: 12, y: 1, z: -10}
+  - {x: 0, y: 1, z: 1}
+  - {x: -19, y: 1, z: -20}
+  - {x: -22, y: 1, z: -6}
+  escondrijos:
+  - {x: 23, y: 1, z: -23}
+  - {x: -20, y: 1, z: -20}
+  - {x: -23, y: 1, z: 23}
+  - {x: 23, y: 1, z: 23}
 --- !u!1 &1762240676
 GameObject:
   m_ObjectHideFlags: 0
