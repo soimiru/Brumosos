@@ -4918,8 +4918,8 @@ GameObject:
   - component: {fileID: 724826529}
   - component: {fileID: 724826528}
   - component: {fileID: 724826527}
-  - component: {fileID: 724826526}
   - component: {fileID: 724826525}
+  - component: {fileID: 724826526}
   - component: {fileID: 724826531}
   m_Layer: 0
   m_Name: NOBLE
@@ -4941,6 +4941,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   agent: {fileID: 724826526}
+  destinos:
+  - {x: 11.5, y: 1, z: 7.5}
+  - {x: -22.5, y: 1, z: 10.5}
+  - {x: -10, y: 1, z: -11}
+  - {x: 12, y: 1, z: -10}
+  - {x: 0, y: 1, z: 1}
+  - {x: -22, y: 1, z: -6}
+  - {x: 14, y: 1, z: -18}
 --- !u!195 &724826526
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -5033,7 +5041,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 724826524}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -19.49, y: 1, z: 14.24}
+  m_LocalPosition: {x: 14.04, y: 1, z: -18.09}
   m_LocalScale: {x: 0.5, y: 1, z: 0.5}
   m_Children: []
   m_Father: {fileID: 0}

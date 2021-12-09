@@ -13,14 +13,13 @@ public class AlomanticosBehaviour : MonoBehaviour
     string accion = "";
     string UItxt = "";
 
-    #region variables Inquisidores
+    #region variables Alomanticos
     private int salud = 100;
     private int metales = 100;
     private int diaNacimiento;
-    #endregion variables Inquisidores
+    #endregion variables Alomanticos
 
     #region variables Patrulla
-    //public Transform target;
     private Transform target;
     private bool patrullando = false;
     private bool cazando = false;
@@ -123,7 +122,6 @@ public class AlomanticosBehaviour : MonoBehaviour
         esNocheAlo = stateMachine.CreatePerception<PushPerception>();
         timerAuxAlo = stateMachine.CreatePerception<TimerPerception>(0.5f);
         timerPatrol = stateMachine.CreatePerception<TimerPerception>(0.2f);
-        //golpearAuxP = stateMachine.CreatePerception<PushPerception>();
 
 
 

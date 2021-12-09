@@ -238,7 +238,7 @@ public class SkaaBehaviour : MonoBehaviour
                 childFSM.Fire("Dormir");
                 break;
         }
-        if (simManager.dias == (diaNacimiento + 2))
+        if (simManager.dias == (diaNacimiento + 3))
         {
             childFSM.Fire("Crecer");
         }
@@ -278,15 +278,16 @@ public class SkaaBehaviour : MonoBehaviour
     }
     private ReturnValues comprobarSalud()
     {
-        //Debug.Log("Compruebo Salud");
+        if ((diaNacimiento + 20) <= simManager.dias)
+        {
+            salud = 0;
+        }
         if (salud > 0 )
         {
-            //Debug.Log("Salud bien");
             return ReturnValues.Succeed;
         }
         else
         {
-           //Debug.Log("Salud mal");
             return ReturnValues.Failed;
         }
     }

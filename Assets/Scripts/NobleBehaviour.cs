@@ -22,12 +22,22 @@ public class NobleBehaviour : MonoBehaviour
     private SimulationManager simManager;
     private NavigationPoints navPoints;
 
+    #region variables Patrulla
+    private Transform target;
+    private bool patrullando = false;
+    private bool first = true;
+    private int currentPoint = 0;
+    public Vector3[] destinos;
+    #endregion variables Patrulla
+
     [Header("Behaviour Engines")]
     StateMachineEngine childFSM = new StateMachineEngine();
     BehaviourTreeEngine adultBT = new BehaviourTreeEngine();
     LeafNode fiestaNode;
+    LeafNode merodearFSMNode;
     UtilitySystemEngine partyUS = new UtilitySystemEngine(BehaviourEngine.IsASubmachine);   
     StateMachineEngine partyFSM = new StateMachineEngine(BehaviourEngine.IsASubmachine);
+    StateMachineEngine merodearFSM = new StateMachineEngine(BehaviourEngine.IsASubmachine);
     State irALaFiestaState;
     Perception heLlegadoALaFiesta;
     Perception ebriedadBaja;
@@ -39,6 +49,13 @@ public class NobleBehaviour : MonoBehaviour
     Perception timer15;
     Perception timer20;
     Perception aux;
+
+    //Perceptions Merodear
+    Perception seHaceDia;
+    Perception encuentroSkaa;
+    Perception timerAux;
+    Perception reproduccionCompleta;
+    Perception estoyCasa;
 
     private void OnGUI()
     {
@@ -88,6 +105,7 @@ public class NobleBehaviour : MonoBehaviour
         }
         if (adulto) {
             partyFSM.Update();
+            merodearFSM.Update();
             adultBT.Update();
         }
         
@@ -239,7 +257,7 @@ public class NobleBehaviour : MonoBehaviour
         estoyCansadoNode = adultBT.CreateLeafNode("estoyCansado", actionCansado, comprobarCansancio);
         dormirNode = adultBT.CreateLeafNode("dormir", actionDormir, resultadoDormir);
         hayAlgunaFiestaNode = adultBT.CreateLeafNode("hayAlgunaFiesta", actionFiesta, comprobarFiesta);
-        merodearNode = adultBT.CreateLeafNode("merodear", merodearFSM, resultadoMerodear);
+        merodearNode = adultBT.CreateLeafNode("merodear", merodearFSMact, resultadoMerodear);
 
         cansancioDormirSequence = adultBT.CreateSequenceNode("cansancioDormir", false);
         cansancioDormirSequence.AddChild(estoyCansadoNode);
@@ -252,7 +270,7 @@ public class NobleBehaviour : MonoBehaviour
         nocheSelector = adultBT.CreateSelectorNode("nocheSelector");
         nocheSelector.AddChild(cansancioDormirSequence);
         nocheSelector.AddChild(fiestaSequence);
-        nocheSelector.AddChild(merodearNode);
+        nocheSelector.AddChild(merodearFSMNode);
 
         nocheSequence = adultBT.CreateSequenceNode("nocheSequence", false);
         nocheSequence.AddChild(esDeNocheNode);
@@ -349,6 +367,7 @@ public class NobleBehaviour : MonoBehaviour
     {
         transform.localScale = new Vector3(1, 1, 1);
         adulto = true;
+        createMerodearFSM();
         createPartyFSM();
         createUSParty();
         createBTAdult();
@@ -524,7 +543,7 @@ public class NobleBehaviour : MonoBehaviour
         return ReturnValues.Succeed;
     }
 
-    void merodearFSM()
+    void merodearFSMact()
     {
         if (miPosicion != posiciones.CALLE)
         {
@@ -629,6 +648,98 @@ public class NobleBehaviour : MonoBehaviour
 
     private void actionSalud() { }
     #endregion
+
+    #region FSM Merodear
+    private void createMerodearFSM()
+    {
+        //Percepciones
+        seHaceDia = merodearFSM.CreatePerception<PushPerception>();
+        encuentroSkaa = merodearFSM.CreatePerception<PushPerception>();
+        reproduccionCompleta = merodearFSM.CreatePerception<PushPerception>();
+        estoyCasa = merodearFSM.CreatePerception<PushPerception>();
+        timerAux = merodearFSM.CreatePerception<TimerPerception>(0.5f);
+
+        //Estados
+        State buscandoSkaa = merodearFSM.CreateEntryState("Buscando Skaa", buscarSkaa);
+        State reproducirseConSkaa = merodearFSM.CreateState("Reproducirse con Skaa", reproducirseConSkaaAct);
+        State volverACasa = merodearFSM.CreateState("Volver a casa", volverACasaAct);
+
+        //Transiciones
+        merodearFSM.CreateTransition("ReBuscar Skaa", buscandoSkaa, timerAux, buscandoSkaa);
+        merodearFSM.CreateTransition("Skaa encontrado", buscandoSkaa, encuentroSkaa, reproducirseConSkaa);
+        merodearFSM.CreateTransition("A por el Skaa", reproducirseConSkaa, timerAux, reproducirseConSkaa);
+        merodearFSM.CreateTransition("Reproduccion completa, para casa", reproducirseConSkaa, reproduccionCompleta, volverACasa);
+        merodearFSM.CreateTransition("Se hizo de dia", buscandoSkaa, seHaceDia, volverACasa);
+
+        merodearFSMNode = adultBT.CreateSubBehaviour("Entrada a sub FSM", merodearFSM, buscandoSkaa);
+        merodearFSM.CreateExitTransition("Vuelta a casa", volverACasa, estoyCasa, ReturnValues.Succeed);
+    }
+
+
+    private void buscarSkaa()
+    {
+        patrullando = true;
+        accion = "Buscando un Skaa";
+        if (simManager.ciclo == SimulationManager.cicloDNA.DIA)
+        {
+            seHaceDia.Fire();
+        }
+        if (this.transform.position.x >= agent.destination.x - 0.5f && this.transform.position.x <= agent.destination.x + 0.5f && this.transform.position.z >= agent.destination.z - 0.5f && this.transform.position.z <= agent.destination.z + 0.5f || first == true)
+        {
+            first = false;
+            updateCurrentPoint();
+            Vector3 newPos = destinos[currentPoint];
+            agent.SetDestination(newPos);
+        }
+    }
+    private void reproducirseConSkaaAct()
+    {
+        patrullando = false;
+        accion = "Yendo a reproducirme";
+        float distTo = Vector3.Distance(transform.position, target.position);
+        transform.LookAt(target);
+        Vector3 moveTo = Vector3.MoveTowards(transform.position, target.position, 180f);
+        agent.SetDestination(moveTo);
+        if (distTo < 2)
+        {
+            int hijo = UnityEngine.Random.Range(1, 4);
+            if (hijo == 1)
+            {
+                simManager.InstanciarAlomantico();
+            }
+            else
+            {
+                simManager.InstanciarSkaa();
+            }
+        }
+    }
+    private void volverACasaAct()
+    {
+        patrullando = false;
+        accion = "Volviendo a casa";
+        agent.SetDestination(navPoints.goToMansionNoble());
+        estoyCasa.Fire();
+    }
+    private void updateCurrentPoint()
+    {
+        
+        currentPoint = UnityEngine.Random.Range(0, 6);
+    }
+    private void OnTriggerEnter(Collider other)
+    {
+        if (patrullando == true)
+        {
+            if (other.tag == "Skaa")
+            {
+                encuentroSkaa.Fire();
+            }
+        }
+    }
+
+
+
+
+    #endregion FSM Merodear
 
     #endregion
 }
