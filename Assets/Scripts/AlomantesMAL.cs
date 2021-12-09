@@ -21,8 +21,9 @@ public class AlomantesMAL : MonoBehaviour
 
     #region variables Patrulla
     //public Transform target;
-    private Transform targetSka;
+    private Transform target;
     private bool patrullando = false;
+    private bool cazando = false;
     public float attackRadius = 30.0f;
     public Transform[] destinations;
     private int currentPoint = 0;
@@ -118,7 +119,7 @@ public class AlomantesMAL : MonoBehaviour
         enemigoAlcanzadoAlo = stateMachine.CreatePerception<PushPerception>();
         enemigoLejosAlo = stateMachine.CreatePerception<PushPerception>();
         esNocheAlo = stateMachine.CreatePerception<PushPerception>();
-        timerAuxAlo = stateMachine.CreatePerception<TimerPerception>(0.25f);
+        timerAuxAlo = stateMachine.CreatePerception<TimerPerception>(0.5f);
        // timerCaza = stateMachine.CreatePerception<TimerPerception>(0.25f);
         //golpearAuxP = stateMachine.CreatePerception<PushPerception>();
 
@@ -164,28 +165,28 @@ public class AlomantesMAL : MonoBehaviour
 
         //Nodos hoja
         LeafNode esDiaLeafNode = behaviourTree.CreateLeafNode("EsDia", actEsDia, compEsDia);
-        LeafNode irACasita = behaviourTree.CreateLeafNode("IrACasita", actIrACasita, comprobarCasita);
-        LeafNode recargarMetales = behaviourTree.CreateLeafNode("Dormir", actDormir, comprobarDormir);
+        LeafNode irACasitaLeafNode = behaviourTree.CreateLeafNode("IrACasita", actIrACasita, comprobarCasita);
+        LeafNode dormirLeafNode = behaviourTree.CreateLeafNode("Dormir", actDormir, comprobarDormir);
 
-        TimerDecoratorNode timerRecarga = behaviourTree.CreateTimerNode("TimerRecargaMetales", recargarMetales, 2);
+        TimerDecoratorNode timerRecarga = behaviourTree.CreateTimerNode("TimerRecargaMetales", dormirLeafNode, 2);
 
 
         //Sequence node comprobar metales
-        SequenceNode comprobarMetalesSequenceNode = behaviourTree.CreateSequenceNode("ComprobarMetalesSequenceNode", false);
-        comprobarMetalesSequenceNode.AddChild(esDiaLeafNode);
-        comprobarMetalesSequenceNode.AddChild(subFSM);
+        SequenceNode comprobarDiaSequenceNode = behaviourTree.CreateSequenceNode("ComprobarDiaSequenceNode", false);
+        comprobarDiaSequenceNode.AddChild(esDiaLeafNode);
+        comprobarDiaSequenceNode.AddChild(subFSM);
 
-        LoopUntilFailDecoratorNode patrullarUntilFail = behaviourTree.CreateLoopUntilFailNode("PatrullarUntilFail", comprobarMetalesSequenceNode);
+        LoopUntilFailDecoratorNode patrullarUntilFail = behaviourTree.CreateLoopUntilFailNode("PatrullarUntilFail", comprobarDiaSequenceNode);
 
-        SequenceNode irMinisterioRecargaSequenceNode = behaviourTree.CreateSequenceNode("IRMinisterioYRecargar", false);
-        irMinisterioRecargaSequenceNode.AddChild(irACasita);
-        irMinisterioRecargaSequenceNode.AddChild(timerRecarga);
+        SequenceNode irCasaADormirSequenceNode = behaviourTree.CreateSequenceNode("irCasaADormirSequenceNode", false);
+        irCasaADormirSequenceNode.AddChild(irACasitaLeafNode);
+        irCasaADormirSequenceNode.AddChild(timerRecarga);
 
-        SequenceNode recargarMetalesSequenceNode = behaviourTree.CreateSequenceNode("RecargarMetalesSequenceNode", false);
-        recargarMetalesSequenceNode.AddChild(patrullarUntilFail);
-        recargarMetalesSequenceNode.AddChild(irMinisterioRecargaSequenceNode);
+        SequenceNode rootSequenceNode = behaviourTree.CreateSequenceNode("RecargarMetalesSequenceNode", false);
+        rootSequenceNode.AddChild(patrullarUntilFail);
+        rootSequenceNode.AddChild(irCasaADormirSequenceNode);
 
-        LoopDecoratorNode rootNode = behaviourTree.CreateLoopNode("RootNode", recargarMetalesSequenceNode);
+        LoopDecoratorNode rootNode = behaviourTree.CreateLoopNode("RootNode", rootSequenceNode);
         behaviourTree.SetRootNode(rootNode);
     }
 
@@ -212,18 +213,10 @@ public class AlomantesMAL : MonoBehaviour
     private void actIrACasita()
     {
         accion = "Volviendo a casa";
-        agent.SetDestination(new Vector3(21.5f, 1f, -4.5f));
+        agent.SetDestination(new Vector3(22.5f, 1f, -23f));
     }
     private ReturnValues comprobarCasita()
     {
-        //if (this.transform.position.x >= 21.0 && this.transform.position.x <= 22.0 && this.transform.position.z >= -5.0 && this.transform.position.z <= -4.0)
-        //{
-        //    return ReturnValues.Succeed;
-        //}
-        //else
-        //{
-        //    return ReturnValues.Running;
-        //}
         return ReturnValues.Succeed;
     }
     private void actDormir()
@@ -269,14 +262,38 @@ public class AlomantesMAL : MonoBehaviour
     private void fsmCazar()
     {
         patrullando = false;
-        accion = "Cazando un Inquisidor";
+        cazando = true;
+        accion = "Cazando a un Inquisidor";
+        float distTo = Vector3.Distance(transform.position, target.position);
+        transform.LookAt(target);
+        Vector3 moveTo = Vector3.MoveTowards(transform.position, target.position, 180f);
+        agent.SetDestination(moveTo);
+
+        if (distTo < 2)
+        {
+            enemigoAlcanzadoAlo.Fire();
+        }
+
     }
     private void fsmLuchar()
     {
         patrullando = false;
         accion = "Luchando";
         //Lucho
-        
+        if (metales >= 5)
+        {
+            metales -= 5;
+            salud -= Random.Range(2, 5);
+        }
+        else
+        {
+            salud -= Random.Range(5, 8);
+        }
+        if (salud <= 0)
+        {
+            saludCeroAlo.Fire();
+        }
+
     }
     private void fsmMorir()
     {
@@ -318,26 +335,18 @@ public class AlomantesMAL : MonoBehaviour
     #endregion Metodos FSM
 
     #region metodosColision
-    //private void OnTriggerEnter(Collider other)
-    //{
-    //    if (patrullando == true)
-    //    {
-    //        if (other.tag == "Skaa")
-    //        {
-    //            targetSka = other.transform;
-    //            skaDescansandoDetectado.Fire();
-    //        }
-    //        else if(other.tag == "Brumoso") 
-    //        {
-    //            enemigoDetectado.Fire();
-    //        }
-    //    }
-    //}
+    private void OnTriggerEnter(Collider other)
+    {
+        if (patrullando == true)
+        {
+            if (other.tag == "Inquisidor")
+            {
+                target = other.transform;
+                enemigosCercaAlo.Fire();
+            }
+        }
+    }
 
-    //private void OnTriggerExit(Collider other)
-    //{
-        
-    //}
     #endregion metodosColision
 }
 
