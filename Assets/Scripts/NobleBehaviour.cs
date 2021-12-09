@@ -582,6 +582,17 @@ public class NobleBehaviour : MonoBehaviour
             nobleCerca.Fire();
         }
     }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (patrullando == true)
+        {
+            if (other.tag == "Skaa")
+            {
+                encuentroSkaa.Fire();
+            }
+        }
+    }
     void irALaFiesta() {
         agent.SetDestination(navPoints.goToMansionNoble());
         //agent.SetDestination(new Vector3(12f, 1, 15f));
@@ -605,21 +616,16 @@ public class NobleBehaviour : MonoBehaviour
     void beberAction() {
         ebriedad += 10;
         accion = "Bebiendo";
-        if (ebriedad >= 30) {
+        if (ebriedad >= 40) {
             ganasReproducirse = 1;
-            if (Random.Range(0, 10) > 5)
-            {
-                nobleCerca.Fire();
-            }
         }
     }
     void bailarAction() {
         accion = "Bailando";
         cansancio += 5;
         ebriedad += 5;
-        if (ebriedad >= 30)
+        if (ebriedad >= 50)
         {
-            ganasReproducirse = 1;
             if (Random.Range(0, 10) > 5) {
                 nobleCerca.Fire();
             }
@@ -630,6 +636,7 @@ public class NobleBehaviour : MonoBehaviour
         accion = "Reproduciendo";
         simManager.InstanciarNoble();
         ganasReproducirse = 0;
+        ebriedad = 0;
     }
     void irseAction()
     {
@@ -646,7 +653,7 @@ public class NobleBehaviour : MonoBehaviour
     }
 
     private void actionMorir(){
-        //Destroy(this);
+        Destroy(this.gameObject);
     }
 
     private ReturnValues comprobarSalud()
@@ -714,24 +721,28 @@ public class NobleBehaviour : MonoBehaviour
     }
     private void reproducirseConSkaaAct()
     {
-        patrullando = false;
-        accion = "Yendo a reproducirme";
-        float distTo = Vector3.Distance(transform.position, target.position);
-        transform.LookAt(target);
-        Vector3 moveTo = Vector3.MoveTowards(transform.position, target.position, 180f);
-        agent.SetDestination(moveTo);
-        if (distTo < 2)
-        {
-            int hijo = UnityEngine.Random.Range(1, 4);
-            if (hijo == 1)
+        
+        if (patrullando == true) {
+            accion = "Yendo a reproducirme";
+            float distTo = Vector3.Distance(transform.position, target.position);
+            transform.LookAt(target);
+            Vector3 moveTo = Vector3.MoveTowards(transform.position, target.position, 180f);
+            agent.SetDestination(moveTo);
+            if (distTo < 2)
             {
-                simManager.InstanciarAlomantico();
+                int hijo = UnityEngine.Random.Range(1, 4);
+                if (hijo == 1)
+                {
+                    simManager.InstanciarAlomantico();
+                }
+                else
+                {
+                    simManager.InstanciarSkaa();
+                }
             }
-            else
-            {
-                simManager.InstanciarSkaa();
-            }
+            patrullando = false;
         }
+        
     }
     private void volverACasaAct()
     {

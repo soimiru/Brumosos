@@ -29,7 +29,10 @@ public class CameraController : MonoBehaviour
             RaycastHit hit;
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
-            if (Physics.Raycast(ray, out hit) && hit.transform.gameObject.tag == "Entity" || Physics.Raycast(ray, out hit) && hit.transform.gameObject.tag == "Inquisidor" || Physics.Raycast(ray, out hit) && hit.transform.gameObject.tag == "Skaa" )
+            if (Physics.Raycast(ray, out hit) && hit.transform.gameObject.tag == "Entity" || 
+                Physics.Raycast(ray, out hit) && hit.transform.gameObject.tag == "Inquisidor" || 
+                Physics.Raycast(ray, out hit) && hit.transform.gameObject.tag == "Skaa" ||
+                Physics.Raycast(ray, out hit) && hit.transform.gameObject.tag == "Alomántico")
             {
                 target = hit.transform;
                 targeted = true;
