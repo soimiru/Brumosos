@@ -10,7 +10,6 @@ public class SimulationManager : MonoBehaviour
 
     public int dias = 1;
     private int tiempoInicial;
-    bool pausa = false;
 
     [Header("Minutos que transcurren en tiempo de juego por cada segundo en la vida real")]
     public int minutosPorSegundo = 10;   //Minutos que transcurren en tiempo de juego por cada segundo en la vida real
@@ -124,7 +123,7 @@ public class SimulationManager : MonoBehaviour
 
     public void timex50()
     {
-        Time.timeScale = 50;
+        Time.timeScale = 20;
         //minutosPorSegundo = 200;
     }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using Random = UnityEngine.Random;
 
 public class NobleBehaviour : MonoBehaviour
 {
@@ -10,10 +11,10 @@ public class NobleBehaviour : MonoBehaviour
     int cansancio = 0;
     int salud = 100;
     int ebriedad = 0;
-    float ganasReproducirse = 1;
+    public float ganasReproducirse = 1;
     string accion = "";
     string UItxt = "";
-    bool fiesta = false;
+    public bool fiesta = false;
     bool adulto = false;
     enum posiciones { FABRICA, MANSIONNOBLE, CALLE }
     posiciones miPosicion;
@@ -252,16 +253,20 @@ public class NobleBehaviour : MonoBehaviour
         LeafNode dormirNode;
         LeafNode hayAlgunaFiestaNode;
         LeafNode merodearNode;
+        LeafNode timeDormir = adultBT.CreateLeafNode("TimerDormir", actTimer, comprobarTimer);
+        TimerDecoratorNode timerDormir;
 
         esDeNocheNode = adultBT.CreateLeafNode("esDeNocheNode", actionNoche, comprobarNoche);
         estoyCansadoNode = adultBT.CreateLeafNode("estoyCansado", actionCansado, comprobarCansancio);
         dormirNode = adultBT.CreateLeafNode("dormir", actionDormir, resultadoDormir);
         hayAlgunaFiestaNode = adultBT.CreateLeafNode("hayAlgunaFiesta", actionFiesta, comprobarFiesta);
         merodearNode = adultBT.CreateLeafNode("merodear", merodearFSMact, resultadoMerodear);
+        timerDormir = adultBT.CreateTimerNode("timerDormir", timeDormir, 4);
 
         cansancioDormirSequence = adultBT.CreateSequenceNode("cansancioDormir", false);
         cansancioDormirSequence.AddChild(estoyCansadoNode);
         cansancioDormirSequence.AddChild(dormirNode);
+        cansancioDormirSequence.AddChild(timerDormir);
 
         fiestaSequence = adultBT.CreateSequenceNode("fiestaSequence", false);
         fiestaSequence.AddChild(hayAlgunaFiestaNode);
@@ -351,7 +356,7 @@ public class NobleBehaviour : MonoBehaviour
     #region METODOS CHILD
     void estudiarAction()
     {
-        agent.SetDestination(navPoints.goToFabrica());
+        agent.SetDestination(navPoints.goToEscuelaNoble());
         accion = "Estudiando";
     }
     void dormirAction()
@@ -426,7 +431,8 @@ public class NobleBehaviour : MonoBehaviour
     //TRABAJAR
     void trabajar() {
         accion = "Trabajando";
-        cansancio += 10;
+
+        cansancio += Random.Range(5, 10);
     }
     private ReturnValues haTrabajado()
     {
@@ -437,7 +443,7 @@ public class NobleBehaviour : MonoBehaviour
     void descansar()
     {
         accion = "Descansando de trabajar";
-        cansancio -= 50;
+        cansancio -= Random.Range(10, 20);
     }
 
     private ReturnValues haDescansado()
@@ -478,7 +484,7 @@ public class NobleBehaviour : MonoBehaviour
     //COMPROBAR CANSANCIO
     private ReturnValues comprobarCansancio()
     {
-        if (cansancio >= 15)
+        if (cansancio >= 40)
         {
             return ReturnValues.Succeed;
         }
@@ -562,6 +568,13 @@ public class NobleBehaviour : MonoBehaviour
 
     #region PARTY
 
+    private void OnTriggerStay(Collider other)
+    {
+        if (fiesta == true && ganasReproducirse == 1)
+        {
+            nobleCerca.Fire();
+        }
+    }
     private void OnCollisionStay(Collision collision)
     {
         if (fiesta == true && ganasReproducirse == 1)
@@ -569,10 +582,9 @@ public class NobleBehaviour : MonoBehaviour
             nobleCerca.Fire();
         }
     }
-
     void irALaFiesta() {
-        //agent.SetDestination(navPoints.goToMansionNoble());
-        agent.SetDestination(new Vector3(12f, 1, 15f));
+        agent.SetDestination(navPoints.goToMansionNoble());
+        //agent.SetDestination(new Vector3(12f, 1, 15f));
         miPosicion = posiciones.MANSIONNOBLE;
         accion = "Yendo a la fiesta";
         if (navPoints.comprobarPosMansionNoble(this.transform.position) && miPosicion != posiciones.MANSIONNOBLE)
@@ -595,6 +607,10 @@ public class NobleBehaviour : MonoBehaviour
         accion = "Bebiendo";
         if (ebriedad >= 30) {
             ganasReproducirse = 1;
+            if (Random.Range(0, 10) > 5)
+            {
+                nobleCerca.Fire();
+            }
         }
     }
     void bailarAction() {
@@ -604,11 +620,15 @@ public class NobleBehaviour : MonoBehaviour
         if (ebriedad >= 30)
         {
             ganasReproducirse = 1;
+            if (Random.Range(0, 10) > 5) {
+                nobleCerca.Fire();
+            }
+            
         }
     }
     void reproducirseAction() {
         accion = "Reproduciendo";
-        Instantiate(this.transform.gameObject);
+        simManager.InstanciarNoble();
         ganasReproducirse = 0;
     }
     void irseAction()
@@ -636,8 +656,7 @@ public class NobleBehaviour : MonoBehaviour
         }
         if (salud <= 0)
         {
-            Debug.Log("MY TIME HAS COME");
-            Destroy(this);
+            Destroy(this.gameObject);
             return ReturnValues.Failed;
         }
         else {
@@ -680,6 +699,7 @@ public class NobleBehaviour : MonoBehaviour
     {
         patrullando = true;
         accion = "Buscando un Skaa";
+        //miPosicion = posiciones.CALLE;
         if (simManager.ciclo == SimulationManager.cicloDNA.DIA)
         {
             seHaceDia.Fire();
@@ -718,23 +738,28 @@ public class NobleBehaviour : MonoBehaviour
         patrullando = false;
         accion = "Volviendo a casa";
         agent.SetDestination(navPoints.goToMansionNoble());
+        //miPosicion = posiciones.MANSIONNOBLE;
         estoyCasa.Fire();
     }
     private void updateCurrentPoint()
     {
-        
         currentPoint = UnityEngine.Random.Range(0, 6);
     }
-    private void OnTriggerEnter(Collider other)
-    {
-        if (patrullando == true)
-        {
-            if (other.tag == "Skaa")
-            {
-                encuentroSkaa.Fire();
-            }
-        }
-    }
+    //private void OnTriggerEnter(Collider other)
+    //{
+    //    if (patrullando == true)
+    //    {
+    //        if (other.tag == "Skaa")
+    //        {
+    //            encuentroSkaa.Fire();
+    //        }
+    //    }
+    //    if (fiesta == true && ganasReproducirse == 1 && other.tag == "Entity")
+    //    {
+    //        Debug.Log("uwu");
+    //        nobleCerca.Fire();
+    //    }
+    //}
 
 
 

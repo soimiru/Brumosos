@@ -248,7 +248,7 @@ public class SkaaBehaviour : MonoBehaviour
     void estudiarAction()
     {
         //agent.SetDestination(new Vector3(-2.5f, 1f, 8f));
-        agent.SetDestination(navPoints.goToFabrica());    //CAMBIAR POR COLEGIO
+        agent.SetDestination(navPoints.goToEscuelaSka());    
         miPosicion = posiciones.FABRICA;
         accion = "Estudiando";
     }

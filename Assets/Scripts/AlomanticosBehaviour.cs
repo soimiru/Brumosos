@@ -7,6 +7,7 @@ public class AlomanticosBehaviour : MonoBehaviour
 {
     public NavMeshAgent agent;
     private SimulationManager simManager;
+    private NavigationPoints navPoints;
     private BehaviourTreeEngine behaviourTree;
     private StateMachineEngine stateMachine;
     private LeafNode subFSM;
@@ -68,7 +69,7 @@ public class AlomanticosBehaviour : MonoBehaviour
         //ESTILO DE LA CAJA DE TEXTO
         GUIStyle style = new GUIStyle();
         Texture2D debugTex = new Texture2D(1, 1);
-        debugTex.SetPixel(0, 0, new Color(0.7f, 0.75f, 1f, 0.5f));
+        debugTex.SetPixel(0, 0, new Color(0.9f, 0.75f, 1f, 0.5f));
         debugTex.Apply();
         style.normal.background = debugTex;
         style.fontSize = 30;
@@ -87,7 +88,7 @@ public class AlomanticosBehaviour : MonoBehaviour
     private void Awake()
     {
         simManager = GameObject.Find("_SimulationManager").GetComponent(typeof(SimulationManager)) as SimulationManager;
-       
+        navPoints = new NavigationPoints();
         diaNacimiento = simManager.dias;
         behaviourTree = new BehaviourTreeEngine(BehaviourEngine.IsNotASubmachine);
         stateMachine = new StateMachineEngine(BehaviourEngine.IsASubmachine);
@@ -198,14 +199,12 @@ public class AlomanticosBehaviour : MonoBehaviour
     }
     private ReturnValues compEsDia()
     {
-        Debug.Log("Compruebo si es de dia");
         if (simManager.ciclo == SimulationManager.cicloDNA.DIA)
         {
             return ReturnValues.Succeed;
         }
         else
         {
-            Debug.Log("Es de noche");
             return ReturnValues.Failed;
         }
     }
@@ -214,7 +213,9 @@ public class AlomanticosBehaviour : MonoBehaviour
     private void actIrACasita()
     {
         accion = "Volviendo a casa";
-        agent.SetDestination(new Vector3(22.5f, 1f, -23f));
+        //agent.SetDestination(new Vector3(22.5f, 1f, -23f));
+        agent.SetDestination(navPoints.goToEsconditeAlomantico());
+
     }
     private ReturnValues comprobarCasita()
     {

@@ -31,6 +31,24 @@ public class NavigationPoints
 
         return newPos;
     }
+    public Vector3 goToEscuelaSka() {
+        Vector3 newPos = new Vector3(Random.Range(3, 9), 1, Random.Range(-23, -22));
+
+        return newPos;
+    }
+    public Vector3 goToEscuelaNoble()
+    {
+        Vector3 newPos = new Vector3(Random.Range(20, 22), 1, Random.Range(5, 8));
+
+        return newPos;
+    }
+
+    public Vector3 goToEsconditeAlomantico()
+    {
+        Vector3 newPos = new Vector3(Random.Range(21, 23), 1, Random.Range(-5, -2));
+
+        return newPos;
+    }
 
     public bool comprobarPosMansionNoble(Vector3 pos)
     {
