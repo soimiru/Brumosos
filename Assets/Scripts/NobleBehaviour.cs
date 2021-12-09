@@ -738,31 +738,12 @@ public class NobleBehaviour : MonoBehaviour
         patrullando = false;
         accion = "Volviendo a casa";
         agent.SetDestination(navPoints.goToMansionNoble());
-        //miPosicion = posiciones.MANSIONNOBLE;
         estoyCasa.Fire();
     }
     private void updateCurrentPoint()
     {
         currentPoint = UnityEngine.Random.Range(0, 6);
     }
-    //private void OnTriggerEnter(Collider other)
-    //{
-    //    if (patrullando == true)
-    //    {
-    //        if (other.tag == "Skaa")
-    //        {
-    //            encuentroSkaa.Fire();
-    //        }
-    //    }
-    //    if (fiesta == true && ganasReproducirse == 1 && other.tag == "Entity")
-    //    {
-    //        Debug.Log("uwu");
-    //        nobleCerca.Fire();
-    //    }
-    //}
-
-
-
 
     #endregion FSM Merodear
 
