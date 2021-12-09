@@ -20,14 +20,12 @@ public class InquisidoresBehaviour : MonoBehaviour
     #endregion variables Inquisidores
 
     #region variables Patrulla
-    //public Transform target;
+    public Transform targetAlomantico;
     private Transform targetSka;
     private bool patrullando = false;
+    private bool cazando = false;
     public float attackRadius = 30.0f;
-    public Transform[] destinations;
     private int currentPoint = 0;
-    [SerializeField] float timer;
-    [SerializeField] float maxTime;
     [SerializeField] bool inRange;
     public Vector3[] destinos;
     private bool first = true;
@@ -141,9 +139,11 @@ public class InquisidoresBehaviour : MonoBehaviour
         stateMachine.CreateTransition("Ska Detectado", patrullar, skaDescansandoDetectado, golpear);
         stateMachine.CreateTransition("Ska Detectado en aux", aux, skaDescansandoDetectado, golpear);
         stateMachine.CreateTransition("Ska Golpeado", golpear, skaGolpeado, golpearAux);
-        stateMachine.CreateTransition("Ska Golpeado 2", golpear, timerAux, golpear);
-        stateMachine.CreateTransition("Ska Golpeado aux", golpearAux, golpearAuxP, patrullar);
-        stateMachine.CreateTransition("Ska Golpeado aux2", golpearAux, timerAux, golpearAux);
+        stateMachine.CreateTransition("De camino a golpear", golpear, timerAux, golpear);
+        stateMachine.CreateTransition("Enemigo detectado de camino a Ska", golpear, enemigoDetectado, cazar);
+        stateMachine.CreateTransition("De vuelta a patrullar", golpearAux, golpearAuxP, patrullar);
+        stateMachine.CreateTransition("De vuelta a patrullar me encontré un Enemigo", golpearAux, enemigoDetectado, cazar);
+        stateMachine.CreateTransition("Comprobación si he vuelto a patrullar", golpearAux, timerAux, golpearAux);
         stateMachine.CreateTransition("Repatrullar", patrullar, patrullaCompleta, aux);
         stateMachine.CreateTransition("Timer Aux", aux, timerCaza, patrullar);
 
@@ -152,11 +152,12 @@ public class InquisidoresBehaviour : MonoBehaviour
         stateMachine.CreateTransition("Enemigo Detectado en aux", aux, enemigoDetectado, cazar);
         stateMachine.CreateTransition("Enemigo Perdido", cazar, enemigoPerdido, patrullar);
 
-        stateMachine.CreateTransition("Cazando", cazar, timerCaza, cazarAux);
-        stateMachine.CreateTransition("CazandoAux", cazarAux, timerCaza, cazar);
+        stateMachine.CreateTransition("Cazando", cazar, timerCaza, cazar);
+        //stateMachine.CreateTransition("CazandoAux", cazarAux, timerCaza, cazar);
 
         stateMachine.CreateTransition("Enemigo Alcanzado", cazar, enemigoAlcanzado, luchar);
-        stateMachine.CreateTransition("Enemigo Fuera Rango", luchar, enemigoFueraDeRango, cazar);
+        stateMachine.CreateTransition("Enemigo Fuera Rango", luchar, enemigoFueraDeRango, patrullar);
+        stateMachine.CreateTransition("Luchando", luchar, timerAux, luchar);
         stateMachine.CreateTransition("Enemigo Derrotado", luchar, enemigoDerrotado, patrullar);
         stateMachine.CreateTransition("Lucha Perdida", luchar, luchaPerdida, morir);
 
@@ -223,7 +224,7 @@ public class InquisidoresBehaviour : MonoBehaviour
     }
     private ReturnValues comprobarMinisterio()
     {
-        if (this.transform.position.x == -21.5 && this.transform.position.z == -13)
+        if (this.transform.position.x >= -22.0 && this.transform.position.x >= -21.0 && this.transform.position.z >= -13.5 && this.transform.position.z <= -12.5)
         {
             return ReturnValues.Succeed;
         }
@@ -254,24 +255,9 @@ public class InquisidoresBehaviour : MonoBehaviour
     private void fsmPatrullar()
     {
         patrullando = true;
-        //Estoy patrullando
-        //float distToEnemy = Vector3.Distance(transform.position, target.position);
-        //float distToSkaa = Vector3.Distance(transform.position, targetSka.position);
+        cazando = false;
 
-        //if (distToEnemy <= attackRadius)
-        //{
-        //    accion = "Cazando";
-        //    //Debug.Log("enemigo a rango");
-        //    enemigoDetectado.Fire();
-        //}
-        //if (distToSkaa <= attackRadius)
-        //{
-        //    accion = "Skaa detectado";
-        //    //Debug.Log("Skaa a rango");
-        //    skaDescansandoDetectado.Fire();
-        //}
-
-        if (!inRange && this.transform.position.x == agent.destination.x && this.transform.position.z == agent.destination.z || first == true)
+        if (!inRange && this.transform.position.x >= agent.destination.x - 0.5f && this.transform.position.x <= agent.destination.x + 0.5f && this.transform.position.z >= agent.destination.z - 0.5f && this.transform.position.z <= agent.destination.z + 0.5f || first == true)
         {
             first = false;
             updateCurrentPoint();
@@ -285,6 +271,7 @@ public class InquisidoresBehaviour : MonoBehaviour
     private void fsmGolpear()
     {
         patrullando = false;
+        cazando = true;
         accion = "Cazando a un Skaa";
         float distTo = Vector3.Distance(transform.position, targetSka.position);
         transform.LookAt(targetSka);
@@ -304,23 +291,49 @@ public class InquisidoresBehaviour : MonoBehaviour
     private void fsmCazar()
     {
         patrullando = false;
+        cazando = true;
         //Cazo a un brumoso
-        //accion = "Cazando brumoso";
-        //float distTo = Vector3.Distance(transform.position, target.position);
-        //transform.LookAt(target);
-        //Vector3 moveTo = Vector3.MoveTowards(transform.position, target.position, 180f);
-        //agent.SetDestination(moveTo);
-        //if (distTo > attackRadius)
-        //{
-        //    enemigoPerdido.Fire();
-        //}
+        accion = "Cazando alomántico";
+        float distTo = Vector3.Distance(transform.position, targetAlomantico.position);
+        transform.LookAt(targetAlomantico);
+        Vector3 moveTo = Vector3.MoveTowards(transform.position, targetAlomantico.position, 180f);
+        agent.SetDestination(moveTo);
+        if (distTo < 2)
+        {
+            enemigoAlcanzado.Fire();
+        }
+       
 
     }
     private void fsmLuchar()
     {
+        
         patrullando = false;
+        cazando = false;
         accion = "Luchando";
         //Lucho
+        if (targetAlomantico == null)
+        {
+            first = true;
+            enemigoDerrotado.Fire();
+        }
+        if (metales >= 5)
+        {
+            metales -= Random.Range(2, 5);
+            salud -= Random.Range(2, 5);
+            if (metales <= 0)
+            {
+                metales = 0;
+            }
+        }
+        else
+        {
+            salud -= Random.Range(5, 8);
+            if (salud <= 0)
+            {
+                salud = 0;
+            }
+        }
         if (salud <= 0)
         {
             luchaPerdida.Fire();
@@ -328,7 +341,7 @@ public class InquisidoresBehaviour : MonoBehaviour
     }
     private void fsmMorir()
     {
-        //Muero
+        Destroy(this.gameObject);
     }
     private void updateCurrentPoint()
     {
@@ -343,7 +356,6 @@ public class InquisidoresBehaviour : MonoBehaviour
     }
     private void fsmAux()
     {
-        //Debug.Log("estoy en aux");
         if (metales <= 0)
         {
             metalesBajos.Fire();
@@ -352,6 +364,7 @@ public class InquisidoresBehaviour : MonoBehaviour
     private void fsmGolpearAux()
     {
         patrullando = false;
+        cazando = false;
         accion = "Skaa golpeado \nVolviendo a patrullar";
         if (!inRange && this.transform.position.x == agent.destination.x && this.transform.position.z == agent.destination.z || first == true)
         {
@@ -371,16 +384,36 @@ public class InquisidoresBehaviour : MonoBehaviour
                 targetSka = other.transform;
                 skaDescansandoDetectado.Fire();
             }
-            else if(other.tag == "Brumoso") 
-            {
-                enemigoDetectado.Fire();
-            }
+            
+        }
+        if (other.tag == "Alomántico")
+        {
+            targetAlomantico = other.transform;
+            enemigoDetectado.Fire();
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        
+        if (cazando == true)
+        {
+            if (other.tag == "Skaa")
+            {
+                //enemigoFueraDeRango.Fire();
+            }
+            else if (other.tag == "Alomántico")
+            {
+                enemigoPerdido.Fire();
+            }
+        }
+        if (cazando == false && patrullando == false)
+        {
+            if (other.tag == "Alomántico")
+            {
+                first = true;
+                enemigoFueraDeRango.Fire();
+            }
+        }
     }
     #endregion metodosColision
 }
