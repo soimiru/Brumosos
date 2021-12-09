@@ -122,7 +122,7 @@ public class AlomantesMAL : MonoBehaviour
         enemigoDerrotado = stateMachine.CreatePerception<PushPerception>();
         esNocheAlo = stateMachine.CreatePerception<PushPerception>();
         timerAuxAlo = stateMachine.CreatePerception<TimerPerception>(0.5f);
-        timerPatrol = stateMachine.CreatePerception<TimerPerception>(0.25f);
+        timerPatrol = stateMachine.CreatePerception<TimerPerception>(0.2f);
         //golpearAuxP = stateMachine.CreatePerception<PushPerception>();
 
 
