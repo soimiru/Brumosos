@@ -37,6 +37,7 @@ public class InquisidoresBehaviour : MonoBehaviour
     private State cazar;
     private State luchar;
     private State morir;
+    //private State instanciarNuevoInquisidor;
     private State aux;
     private State cazarAux;
     private State golpearAux;
@@ -131,6 +132,7 @@ public class InquisidoresBehaviour : MonoBehaviour
         cazar = stateMachine.CreateState("Cazar", fsmCazar);
         luchar = stateMachine.CreateState("Luchar", fsmLuchar);
         morir = stateMachine.CreateState("Morir", fsmMorir);
+        //instanciarNuevoInquisidor = stateMachine.CreateState("instanciarInquisidor", instanciarInquisidor);
         aux = stateMachine.CreateState("Aux", fsmAux);
         cazarAux = stateMachine.CreateState("CazarAux", fsmAux);
         golpearAux = stateMachine.CreateState("GolpearAux", fsmGolpearAux);
@@ -342,6 +344,7 @@ public class InquisidoresBehaviour : MonoBehaviour
     private void fsmMorir()
     {
         Destroy(this.gameObject);
+
     }
     private void updateCurrentPoint()
     {
@@ -371,6 +374,11 @@ public class InquisidoresBehaviour : MonoBehaviour
             first = true;
             golpearAuxP.Fire();
         }
+    }
+
+    private void instanciarInquisidor()
+    {
+
     }
     #endregion Metodos FSM
 
