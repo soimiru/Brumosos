@@ -1,11 +1,11 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 
-public class NavigationPoints : MonoBehaviour
+public class NavigationPoints 
 {
-
+    public NavigationPoints() { 
+    
+    }
     public Vector3 goToMansionNoble() {
         Vector3 newPos = new Vector3(Random.Range(9, 20), 1, Random.Range(11, 20));
 

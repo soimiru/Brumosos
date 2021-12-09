@@ -4,7 +4,9 @@ using UnityEngine.AI;
 public class SkaaBehaviour : MonoBehaviour
 {
     public NavMeshAgent agent;
-    public NavigationPoints navigation;
+    private NavigationPoints navPoints;
+    public enum posiciones { FABRICA, CHOZASKAA, CALLE }
+    public posiciones miPosicion;
     private SimulationManager simManager;
     private BehaviourTreeEngine behaviourTree;
     StateMachineEngine childFSM;
@@ -42,12 +44,13 @@ public class SkaaBehaviour : MonoBehaviour
         //ESTILO DE LA CAJA DE TEXTO
         GUIStyle style = new GUIStyle();
         Texture2D debugTex = new Texture2D(1, 1);
-        debugTex.SetPixel(0, 0, new Color(1f, 1f, 1f, 0.2f));
+        debugTex.SetPixel(0, 0, new Color(1f, 1f, 0.7f, 0.5f));
+        debugTex.Apply();
         style.normal.background = debugTex;
         style.fontSize = 30;
 
         //TAMAÑO Y POSICION
-        Rect rect = new Rect(0, 0, 300, 100);
+        Rect rect = new Rect(0, 0, 330, 140);
         Vector3 offset = new Vector3(0f, 0.5f, 0f); // height above the target position
         Vector3 point = Camera.main.WorldToScreenPoint(this.transform.position + offset);
         rect.x = point.x - 150;
@@ -59,8 +62,10 @@ public class SkaaBehaviour : MonoBehaviour
 
     private void Awake()
     {
+        this.transform.localScale = new Vector3(0.5f, 1, 0.5f);
         simManager = GameObject.Find("_SimulationManager").GetComponent(typeof(SimulationManager)) as SimulationManager;
         diaNacimiento = simManager.dias;
+        navPoints = new NavigationPoints();
 
         behaviourTree = new BehaviourTreeEngine(BehaviourEngine.IsNotASubmachine);
         childFSM = new StateMachineEngine();
@@ -243,12 +248,16 @@ public class SkaaBehaviour : MonoBehaviour
     #region FSM Child
     void estudiarAction()
     {
-        agent.SetDestination(new Vector3(-2.5f, 1f, 8f));
+        //agent.SetDestination(new Vector3(-2.5f, 1f, 8f));
+        agent.SetDestination(navPoints.goToFabrica());    //CAMBIAR POR COLEGIO
+        miPosicion = posiciones.FABRICA;
         accion = "Estudiando";
     }
     void dormirAction()
     {
-        agent.SetDestination(new Vector3(18f, 1f, -20f));
+        //agent.SetDestination(new Vector3(18f, 1f, -20f));
+        agent.SetDestination(navPoints.goToChozaSkaa());
+        miPosicion = posiciones.CHOZASKAA;
         accion = "Durmiendo";
     }
     void nacerAction()
@@ -356,14 +365,17 @@ public class SkaaBehaviour : MonoBehaviour
     {
         //Programar la acción de dormir
         //Futuramente se cambiará al US
-        agent.SetDestination(new Vector3(15.5f, 1f, -18.5f));
+        //agent.SetDestination(new Vector3(15.5f, 1f, -18.5f));
+        agent.SetDestination(navPoints.goToChozaSkaa());
         accion = "Durmiendo";
     }
     private ReturnValues comprobarDormir()
     {
         //Debug.Log("comprobacion de dormir");
-        if (this.transform.position.x == 15.5f && this.transform.position.z == -18.5f && simManager.ciclo == SimulationManager.cicloDNA.DIA)
+        //if (this.transform.position.x == 15.5f && this.transform.position.z == -18.5f && simManager.ciclo == SimulationManager.cicloDNA.DIA)
+        if(navPoints.comprobarChozaSkaa(this.transform.position))
         {
+            miPosicion = posiciones.CHOZASKAA;
             return ReturnValues.Succeed;
         }
         else
@@ -375,14 +387,17 @@ public class SkaaBehaviour : MonoBehaviour
 
     private void actTrabajar()
     {
-        agent.SetDestination(new Vector3(-19.5f, 1f, 19.5f));
+        //agent.SetDestination(new Vector3(-19.5f, 1f, 19.5f));
+        agent.SetDestination(navPoints.goToFabrica());
         cansancio += 20;
         //Debug.Log("Acabo de trabajar");
     }
     private ReturnValues comprobarTrabajar()
     {
-        if (this.transform.position.x == -19.5f || this.transform.position.z == 19.5f)
+        //if (this.transform.position.x == -19.5f || this.transform.position.z == 19.5f)
+        if(navPoints.comprobarPosFabrica(this.transform.position))
         {
+            miPosicion = posiciones.FABRICA;
             return ReturnValues.Succeed;
         }
         else
@@ -413,11 +428,15 @@ public class SkaaBehaviour : MonoBehaviour
     {
         accion = "Voy a trabajar";
         agent.SetDestination(new Vector3(-19.5f, 1f, 19.5f));
+        agent.SetDestination(navPoints.goToFabrica());
+
     }
     private ReturnValues comprobarLlegada()
     {
-        if (this.transform.position.x == -19.5f || this.transform.position.z == 19.5f)
+        //if (this.transform.position.x == -19.5f || this.transform.position.z == 19.5f)
+        if (navPoints.comprobarPosFabrica(this.transform.position))
         {
+            miPosicion = posiciones.FABRICA;
             return ReturnValues.Succeed;
         }
         else

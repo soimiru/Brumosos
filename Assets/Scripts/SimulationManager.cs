@@ -22,9 +22,17 @@ public class SimulationManager : MonoBehaviour
     public enum cicloDNA { DIA, NOCHE, AMANECER }
     public cicloDNA ciclo;
 
+    [Header("Agentes")]
+    private NavigationPoints navPoints;
+    public GameObject skaa;
+    public GameObject noble;
+    public GameObject inquisidor;
+    public GameObject alomantico;
+
     // Start is called before the first frame update
     void Start()
     {
+        navPoints = new NavigationPoints();
         tiempoAMostrarEnSegundos = tiempoInicial;
         Time.timeScale = minutosPorSegundo;
         //canvasUI = gameObject.transform.Find("MainCanvas").gameObject;
@@ -122,6 +130,22 @@ public class SimulationManager : MonoBehaviour
 
     public void Pause() {
         Time.timeScale = 0;
+    }
+
+    public void InstanciarSkaa() {
+        Instantiate(skaa, navPoints.goToChozaSkaa(), new Quaternion(1, 1, 1, 1));
+    }
+    public void InstanciarNoble()
+    {
+        Instantiate(noble, navPoints.goToMansionNoble(), new Quaternion(1, 1, 1, 1));
+    }
+    public void InstanciarInquisidor()
+    {
+        Instantiate(inquisidor, navPoints.goToMinisterio(), new Quaternion(1, 1, 1, 1));
+    }
+    public void InstanciarAlomantico()
+    {
+        Instantiate(alomantico, navPoints.goToChozaSkaa(), new Quaternion(1, 1, 1, 1));
     }
 }
 
