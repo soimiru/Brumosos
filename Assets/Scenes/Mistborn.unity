@@ -885,7 +885,7 @@ MonoBehaviour:
   skaa: {fileID: 452694727}
   noble: {fileID: 724826524}
   inquisidor: {fileID: 1186501134}
-  alomantico: {fileID: 1186501134}
+  alomantico: {fileID: 1755492960}
 --- !u!4 &98753092
 Transform:
   m_ObjectHideFlags: 0
@@ -4940,9 +4940,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 402f6270616cca4449b90ca9fc56c046, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fiesta: 0
   agent: {fileID: 724826526}
-  miPosicion: 0
 --- !u!195 &724826526
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -10424,7 +10422,7 @@ GameObject:
   - component: {fileID: 1755492963}
   - component: {fileID: 1755492962}
   m_Layer: 0
-  m_Name: "Alom\xE1ntico"
+  m_Name: "ALOM\xC1NTICO"
   m_TagString: "Alom\xE1ntico"
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
