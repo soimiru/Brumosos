@@ -330,9 +330,9 @@ public class NobleBehaviour : MonoBehaviour
         aux = partyFSM.CreatePerception<PushPerception>();
         esDeDia = partyFSM.CreatePerception<PushPerception>();
         nobleCerca = partyFSM.CreatePerception<PushPerception>();
-        timer10 = partyFSM.CreatePerception<TimerPerception>(1);
-        timer15 = partyFSM.CreatePerception<TimerPerception>(1);
-        timer20 = partyFSM.CreatePerception<TimerPerception>(2);
+        timer10 = partyFSM.CreatePerception<TimerPerception>(2);
+        timer15 = partyFSM.CreatePerception<TimerPerception>(3);
+        timer20 = partyFSM.CreatePerception<TimerPerception>(5);
 
         //TRANSICIONES
         partyFSM.CreateTransition("NeutroFiesta", irALaFiestaState, heLlegadoALaFiesta, neutralFiestaState);

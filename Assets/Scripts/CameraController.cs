@@ -78,7 +78,7 @@ public class CameraController : MonoBehaviour
 
     void LateUpdate()
     {
-        if (targeted) {
+        if (targeted && target != null) {
             //FixedUpdate para mejores resultados, pero queda mejor con LateUpdate
             Vector3 desiredPosition = target.position + offset;
             Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
