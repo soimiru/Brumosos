@@ -81,7 +81,7 @@ public class NobleBehaviour : MonoBehaviour
     {
         if (!adulto) {
             FSMChild();
-            if (diaNacimiento + 10 == simManager.dias)
+            if (diaNacimiento + 3 == simManager.dias)
             {
                 crecerAction();
             }
@@ -182,20 +182,41 @@ public class NobleBehaviour : MonoBehaviour
         //DÍA
         SequenceNode diaSequence;
         SelectorNode descansoTrabajoSelector;
+        SequenceNode comprobarDescanso;
+        SequenceNode trabajarYTimer;
 
         LeafNode esDeDiaNode;
         LeafNode irALaFabricaNode;
         LeafNode trabajarNode;
         LeafNode descansarNode;
-        
+        LeafNode comprobarDescansoNode;
+
+        LeafNode timeDescansarLeafNode = adultBT.CreateLeafNode("TimerDescansar", actTimer, comprobarTimer);
+        LeafNode timeTrabajarLeafNode = adultBT.CreateLeafNode("TimerTrabajar", actTimer, comprobarTimer);
+
+        TimerDecoratorNode timerNodeDescansar = adultBT.CreateTimerNode("TimerNodeDescansar", timeDescansarLeafNode, 2);
+        TimerDecoratorNode timerNodeTrabajar = adultBT.CreateTimerNode("TimerNodeTrabajar", timeTrabajarLeafNode, 2);
+
+
         esDeDiaNode = adultBT.CreateLeafNode("esDeDiaNode", actionDia, comprobarDia);
         irALaFabricaNode = adultBT.CreateLeafNode("irALaFabrica", actionIrFabrica, comprobarIrFabrica);
         trabajarNode = adultBT.CreateLeafNode("trabajarNode", trabajar, haTrabajado);
         descansarNode = adultBT.CreateLeafNode("descansarNode", descansar, haDescansado);
-        
+        comprobarDescansoNode = adultBT.CreateLeafNode("comprobarDescansoNode", actComprobarDescanso, compDescanso);
+
+        trabajarYTimer = adultBT.CreateSequenceNode("TrabajarYTimer", false);
+        trabajarYTimer.AddChild(trabajarNode);
+        trabajarYTimer.AddChild(timerNodeTrabajar);
+
+        comprobarDescanso = adultBT.CreateSequenceNode("ComprobarDescansoSequence", false);
+        comprobarDescanso.AddChild(comprobarDescansoNode);
+        comprobarDescanso.AddChild(descansarNode);
+        comprobarDescanso.AddChild(timerNodeDescansar);
+
         descansoTrabajoSelector = adultBT.CreateSelectorNode("descansoTrabajoSelector");
-        descansoTrabajoSelector.AddChild(trabajarNode);
-        descansoTrabajoSelector.AddChild(descansarNode);
+        descansoTrabajoSelector.AddChild(comprobarDescanso);
+        descansoTrabajoSelector.AddChild(trabajarYTimer);
+        
 
         diaSequence = adultBT.CreateSequenceNode("diaSequence", false);
         diaSequence.AddChild(esDeDiaNode);
@@ -386,7 +407,7 @@ public class NobleBehaviour : MonoBehaviour
     //TRABAJAR
     void trabajar() {
         accion = "Trabajando";
-        cansancio += 1;
+        cansancio += 10;
     }
     private ReturnValues haTrabajado()
     {
@@ -397,10 +418,36 @@ public class NobleBehaviour : MonoBehaviour
     void descansar()
     {
         accion = "Descansando de trabajar";
-        cansancio -= 1;
+        cansancio -= 50;
     }
 
     private ReturnValues haDescansado()
+    {
+        return ReturnValues.Succeed;
+    }
+
+    void actComprobarDescanso()
+    {
+
+    }
+
+    private ReturnValues compDescanso()
+    {
+        if (cansancio >= 60)
+        {
+            return ReturnValues.Succeed;
+        }
+        else
+        {
+            return ReturnValues.Failed;
+        }
+        
+    }
+    private void actTimer()
+    {
+        cansancio -= 0;
+    }
+    private ReturnValues comprobarTimer()
     {
         return ReturnValues.Succeed;
     }
@@ -565,7 +612,7 @@ public class NobleBehaviour : MonoBehaviour
 
     private ReturnValues comprobarSalud()
     {
-        if ((diaNacimiento + 15) <= simManager.dias) {
+        if ((diaNacimiento + 25) <= simManager.dias) {
             salud = 0;
         }
         if (salud <= 0)

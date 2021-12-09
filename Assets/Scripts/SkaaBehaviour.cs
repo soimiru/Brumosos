@@ -96,7 +96,6 @@ public class SkaaBehaviour : MonoBehaviour
     }
     private void createBT()
     {
-
         //Nodos hoja
         LeafNode tengoSaludLeafNode = behaviourTree.CreateLeafNode("TengoSalud", actSalud, comprobarSalud); 
         LeafNode esDiaLeafNode = behaviourTree.CreateLeafNode("EsDia", actDia, comprobarDia);
