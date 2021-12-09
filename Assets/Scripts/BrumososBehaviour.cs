@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -91,7 +93,7 @@ public class BrumososBehaviour : MonoBehaviour
     void Update()
     {
         behaviourTree.Update();
-        //stateMachine.Update();
+        stateMachine.Update();
     }
 
     private void createFSMMerodear()
